@@ -26,7 +26,7 @@ const routes = require('./routes/routes');
 app.use('/api', routes)
 
 
-app.listen(3000, () => {
+app.listen(port = process.env.PORT, () => {
     console.log(`Server Started at ${3000}`)
 })
 
