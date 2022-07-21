@@ -1,9 +1,9 @@
-require('dotenv').config();
+
 const cors = require('cors');
 const express = require('express');
 const mongoose = require('mongoose');
 const compression = require('compression')
-const mongoString = process.env.DATABASE_URL;
+const mongoString ="mongodb+srv://prateek:X9rB2xeD2a1BRbXj@atlascluster.nr5tu.mongodb.net/nearme?retryWrites=true&w=majority";
 
 mongoose.connect(mongoString,{ poolSize: 10 });
 const database = mongoose.connection;
