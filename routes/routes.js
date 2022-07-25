@@ -44,21 +44,21 @@ var upload = multer({
 })
 
 AWS.config.update({
-  accessKeyId: "AKIAYR66VYOCPTUNOF6T",
-  secretAccessKey: "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",
-  region: 'us-west-2'
+  accessKeyId: process.env.accessKeyId,
+  secretAccessKey: process.env.secretAccessKey,
+  region:process.env.region
 });
 
 const s3 = new AWS.S3({
-  accessKeyId: "AKIAYR66VYOCPTUNOF6T",
-  secretAccessKey: "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",
-  Bucket: "textract-console-us-west-2-5e741523-38d7-48d2-abff-a67e50c46fd6"
+  accessKeyId: process.env.accessKeyId,
+  secretAccessKey: process.env.secretAccessKey,
+  Bucket: process.env.s3Bucket
 })
 
 
 const multerS3Config = multerS3({
   s3: s3,
-  bucket: "textract-console-us-west-2-5e741523-38d7-48d2-abff-a67e50c46fd6",
+  bucket: process.env.s3Bucket,
   metadata: function (req, file, cb) {
     cb(null, { fieldName: file.fieldname });
   },
@@ -772,12 +772,12 @@ router.post('/fileupload', uploads.single("file"), async function (req, res, nex
   })
 
 
-
+ 
   medicalrecordModel.save()
   res.json(success("Record Saved! We will update once Smart Report Gets Generated", { data: 1 }, res.statusCode))
 
 
-  const textractData = await documentExtract(req.file.key, res, medicalrecordModel)
+const aa=await documentExtract(req.file.key, res, medicalrecordModel)
 
 })
 
@@ -786,39 +786,44 @@ router.post('/fileupload', uploads.single("file"), async function (req, res, nex
 async function documentExtract(key, res, medicalrecordModel) {
   return new Promise(resolve => {
     var textract = new AWS.Textract({
-      region: "us-west-2",
-      endpoint: `https://textract.us-west-2.amazonaws.com/`,
-      accessKeyId: "AKIAYR66VYOCPTUNOF6T",
-      secretAccessKey: "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"
+      region: process.env.region,
+      endpoint: process.env.textractendpoint,
+      accessKeyId: process.env.accessKeyId,
+      secretAccessKey: process.env.secretAccessKey
     })
     var params = {
       DocumentLocation: {
         S3Object: {
-          Bucket: "textract-console-us-west-2-5e741523-38d7-48d2-abff-a67e50c46fd6",
+          Bucket: process.env.s3Bucket,
           Name: key
         }
       },
       NotificationChannel: {
-        RoleArn: "arn:aws:iam::588340642692:role/textractrole",
+        RoleArn: process.env.RoleArn,
 
-        SNSTopicArn: "arn:aws:sns:us-west-2:588340642692:AmazonTextractMyTopic"
+        SNSTopicArn: process.env.SNSTopicArn
       }
 
     }
 
     textract.startDocumentTextDetection(params, (err, data1) => {
+      console.log("startDocumentTextDetection")
       if (err) {
         console.error(err)
         return resolve(err)
       } else {
         console.log(data1)
         AWS.config.update({
-          region: 'us-west-2', accessKeyId: "AKIAYR66VYOCPTUNOF6T",
-          secretAccessKey: "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"
+          region: process.env.region,
+          accessKeyId: process.env.accessKeyId,
+          secretAccessKey: process.env.secretAccessKey
         });
+        console.log("Consumer")
         const app = Consumer.create({
-          queueUrl: 'https://sqs.us-west-2.amazonaws.com/588340642692/txtractque',
+        
+          queueUrl: process.env.queueUrl,
           handleMessage: async (data) => {
+            console.log("Consumer created")
             var jsonObj = JSON.parse(data.Body);
             if (jsonObj.JobId && data1.JobId) {
               var textDetectionParams = { JobId: jsonObj.JobId, MaxResults: 1000 };
