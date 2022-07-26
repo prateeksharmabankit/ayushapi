@@ -837,7 +837,7 @@ async function documentExtract(key, res, medicalrecordModel) {
 
                   })
 
-
+                  console.log(txt);
                   const client = new AWS.ComprehendMedical()
                   const params = {
                     Text: txt
