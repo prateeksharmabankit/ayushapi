@@ -8,7 +8,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env: 
-        DB_HOST: ${{ secrets.S3BUCKET }}
+        S3BUCKET : ${{ secrets.S3BUCKET }}
 
     steps:
       - uses: actions/checkout@v2
