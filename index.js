@@ -4,7 +4,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const compression = require('compression')
 const dotenv = require('dotenv');
-dotenv.config({path: "enviornment" + '/.env' });
+dotenv.config();
 
 const mongoString ="mongodb+srv://prateek:V9z1ntUKFeosJLK5@cluster0.aiuci.mongodb.net/proacdoc?retryWrites=true&w=majority";
 
