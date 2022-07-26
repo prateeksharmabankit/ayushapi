@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env: 
+        DB_HOST: ${{ secrets.ENVKEY_SOME_API_KEY }}
 
     steps:
       - uses: actions/checkout@v2
