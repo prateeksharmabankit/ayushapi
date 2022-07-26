@@ -34,7 +34,6 @@ jobs:
         with:
           name: node-app
           path: release.zip
-          clean: 'false'
 
   deploy:
     runs-on: ubuntu-latest
@@ -54,7 +53,6 @@ jobs:
         uses: azure/webapps-deploy@v2
         with:
          app-name: 'ayushmanbharatapis'
-         clean: 'false'
          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D6FCF53256494B75A9B5914D7A0A3F54 }}
          slot-name: 'Production'
          package: release.zip
