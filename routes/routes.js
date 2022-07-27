@@ -45,14 +45,14 @@ var upload = multer({
 })
 
 AWS.config.update({
-  accessKeyId: process.env.accessKeyId,
-  secretAccessKey: process.env.secretAccessKey,
+  accessKeyId:"AKIAYR66VYOCLHFUXA4V",
+  secretAccessKey:"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",
   region:process.env.region
 });
 
 const s3 = new AWS.S3({
-  accessKeyId: process.env.accessKeyId,
-  secretAccessKey: process.env.secretAccessKey,
+  accessKeyId:"AKIAYR66VYOCLHFUXA4V",
+  secretAccessKey:"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"
 
   
 })
@@ -764,6 +764,7 @@ router.get('/chats/getMyChatContent/:chatId', async (req, res) => {
 
 router.post('/fileupload', uploads.single("file"), async function (req, res, next) {
 
+  console.log(req.file.location)
   const medicalrecordModel = new MedicalRecordModel({
     recordId: GetRandomId(10000, 1000000),
     dateTimeStamp: new Date(),
@@ -780,7 +781,7 @@ router.post('/fileupload', uploads.single("file"), async function (req, res, nex
   res.json(success("Record Saved! We will update once Smart Report Gets Generated", { data: 1 }, res.statusCode))
 
 
-const aa=await documentExtract(req.file.key, res, medicalrecordModel)
+//const aa=await documentExtract(req.file.key, res, medicalrecordModel)
 
 })
 
@@ -791,8 +792,8 @@ async function documentExtract(key, res, medicalrecordModel) {
     var textract = new AWS.Textract({
       region: process.env.region,
       endpoint: process.env.textractendpoint,
-      accessKeyId: process.env.accessKeyId,
-      secretAccessKey: process.env.secretAccessKey
+      accessKeyId:"AKIAYR66VYOCLHFUXA4V",
+      secretAccessKey:"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"
     })
     var params = {
       DocumentLocation: {
@@ -818,8 +819,8 @@ async function documentExtract(key, res, medicalrecordModel) {
         console.log(data1)
         AWS.config.update({
           region: process.env.region,
-          accessKeyId: process.env.accessKeyId,
-          secretAccessKey: process.env.secretAccessKey
+          accessKeyId:"AKIAYR66VYOCLHFUXA4V",
+  secretAccessKey:"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"
         });
         console.log("Consumer")
         const app = Consumer.create({
