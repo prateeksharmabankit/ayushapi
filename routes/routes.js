@@ -825,7 +825,7 @@ async function documentExtract(key, res, medicalrecordModel) {
         console.log("Consumer")
         const app = Consumer.create({
         
-          queueUrl:'https://sqs.us-west-2.amazonaws.com/588340642692/txtractque'
+          queueUrl:'https://sqs.us-west-2.amazonaws.com/588340642692/txtractque',
           handleMessage: async (data) => {
             console.log("Consumer created")
             console.log(data)
