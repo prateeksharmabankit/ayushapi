@@ -47,7 +47,7 @@ var upload = multer({
 AWS.config.update({
   accessKeyId:"AKIAYR66VYOCLHFUXA4V",
   secretAccessKey:"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",
-  region:process.env.region
+  region:"us-west-2"
 });
 
 const s3 = new AWS.S3({
@@ -790,7 +790,7 @@ const aa=await documentExtract(req.file.key, res, medicalrecordModel)
 async function documentExtract(key, res, medicalrecordModel) {
   return new Promise(resolve => {
     var textract = new AWS.Textract({
-      region: process.env.region,
+      region:"us-west-2",
       endpoint: process.env.textractendpoint,
       accessKeyId:"AKIAYR66VYOCLHFUXA4V",
       secretAccessKey:"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"
@@ -818,14 +818,14 @@ async function documentExtract(key, res, medicalrecordModel) {
       } else {
         console.log(data1)
         AWS.config.update({
-          region: process.env.region,
+          region: "us-west-2",
           accessKeyId:"AKIAYR66VYOCLHFUXA4V",
   secretAccessKey:"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"
         });
         console.log("Consumer")
         const app = Consumer.create({
         
-          queueUrl: process.env.queueUrl,
+          queueUrl:'https://sqs.us-west-2.amazonaws.com/588340642692/txtractque'
           handleMessage: async (data) => {
             console.log("Consumer created")
             console.log(data)
