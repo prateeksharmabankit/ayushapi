@@ -1,6 +1,7 @@
 const { json } = require('express');
 const express = require('express');
-
+const dotenv = require('dotenv');
+dotenv.config();
 const { getDate } = require('javascript-time-ago/gradation');
 const Model = require('../models/model');
 const UserModel = require('../models/user');
@@ -52,13 +53,13 @@ AWS.config.update({
 const s3 = new AWS.S3({
   accessKeyId: process.env.accessKeyId,
   secretAccessKey: process.env.secretAccessKey,
-  Bucket: "textract-console-us-west-2-5e741523-38d7-48d2-abff-a67e50c46fd6"
+  Bucket: process.env.s3Bucket
 })
 
 
 const multerS3Config = multerS3({
   s3: s3,
-  bucket: "textract-console-us-west-2-5e741523-38d7-48d2-abff-a67e50c46fd6",
+  bucket:  process.env.s3Bucket,
   metadata: function (req, file, cb) {
     cb(null, { fieldName: file.fieldname });
   },
@@ -794,7 +795,7 @@ async function documentExtract(key, res, medicalrecordModel) {
     var params = {
       DocumentLocation: {
         S3Object: {
-          Bucket: "textract-console-us-west-2-5e741523-38d7-48d2-abff-a67e50c46fd6",
+          Bucket:  process.env.s3Bucket,
           Name: key
         }
       },
