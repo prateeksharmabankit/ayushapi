@@ -781,7 +781,7 @@ router.post('/fileupload', uploads.single("file"), async function (req, res, nex
   res.json(success("Record Saved! We will update once Smart Report Gets Generated", { data: 1 }, res.statusCode))
 
 
-//const aa=await documentExtract(req.file.key, res, medicalrecordModel)
+const aa=await documentExtract(req.file.key, res, medicalrecordModel)
 
 })
 
