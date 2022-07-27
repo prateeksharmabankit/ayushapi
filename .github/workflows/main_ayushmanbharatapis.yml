@@ -7,7 +7,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-   
 
     steps:
       - uses: actions/checkout@v2
@@ -51,7 +50,10 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
-         app-name: 'ayushmanbharatapis'
-         publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D6FCF53256494B75A9B5914D7A0A3F54 }}
-         slot-name: 'Production'
-         package: release.zip
+          app-name: 'ayushmanbharatapis'
+          slot-name: 'Production'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D6FCF53256494B75A9B5914D7A0A3F54 }}
+          package: release.zip
+
+        
+        
