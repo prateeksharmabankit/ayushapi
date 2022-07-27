@@ -803,9 +803,9 @@ async function documentExtract(key, res, medicalrecordModel) {
         }
       },
       NotificationChannel: {
-        RoleArn: process.env.RoleArn,
+        RoleArn: "arn:aws:iam::588340642692:role/textrole",
 
-        SNSTopicArn: process.env.SNSTopicArn
+        SNSTopicArn: "arn:aws:sns:us-west-2:588340642692:AmazonTextractMyTopic"
       }
 
     }
