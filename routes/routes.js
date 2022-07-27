@@ -53,26 +53,28 @@ AWS.config.update({
 const s3 = new AWS.S3({
   accessKeyId: process.env.accessKeyId,
   secretAccessKey: process.env.secretAccessKey,
-  Bucket:  "textract-console-us-west-2-5e741523-38d7-48d2-abff-a67e50c46fd6",
+
+  
 })
 
 
-const multerS3Config = multerS3({
-  s3: s3,
-  bucket:  "textract-console-us-west-2-5e741523-38d7-48d2-abff-a67e50c46fd6",
-  metadata: function (req, file, cb) {
-    cb(null, { fieldName: file.fieldname });
-  },
-  key: function (req, file, cb) {
-    cb(null, Date.now().toString() + ".pdf")
-  }
 
-});
 
 const uploads = multer({
-  storage: multerS3Config,
+  storage: multerS3({
+    bucket:'textract-console-us-west-2-5e741523-38d7-48d2-abff-a67e50c46fd6',
+    s3: s3,
+    
+    metadata: function (req, file, cb) {
+      cb(null, { fieldName: file.fieldname });
+    },
+    key: function (req, file, cb) {
+      cb(null, Date.now().toString() + ".pdf")
+    }
+  
+  }),
   contentType: multerS3.AUTO_CONTENT_TYPE,
-
+  
 
 });
 
