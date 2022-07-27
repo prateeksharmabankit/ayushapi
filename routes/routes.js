@@ -53,7 +53,7 @@ AWS.config.update({
 const s3 = new AWS.S3({
   accessKeyId: process.env.accessKeyId,
   secretAccessKey: process.env.secretAccessKey,
-  
+  Bucket:  "textract-console-us-west-2-5e741523-38d7-48d2-abff-a67e50c46fd6",
 })
 
 
@@ -795,7 +795,7 @@ async function documentExtract(key, res, medicalrecordModel) {
     var params = {
       DocumentLocation: {
         S3Object: {
-          Bucket:  awsbucket,
+          Bucket:  "textract-console-us-west-2-5e741523-38d7-48d2-abff-a67e50c46fd6",
           Name: key
         }
       },
@@ -825,6 +825,7 @@ async function documentExtract(key, res, medicalrecordModel) {
           queueUrl: process.env.queueUrl,
           handleMessage: async (data) => {
             console.log("Consumer created")
+            console.log(data)
             var jsonObj = JSON.parse(data.Body);
             if (jsonObj.JobId && data1.JobId) {
               var textDetectionParams = { JobId: jsonObj.JobId, MaxResults: 1000 };
@@ -838,7 +839,7 @@ async function documentExtract(key, res, medicalrecordModel) {
 
                   })
 
-                  console.log(txt);
+                
                   const client = new AWS.ComprehendMedical()
                   const params = {
                     Text: txt
