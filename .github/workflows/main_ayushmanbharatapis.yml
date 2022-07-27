@@ -1,3 +1,8 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy Node.js app to Azure Web App - ayushmanbharatapis
+
 on:
   push:
     branches:
@@ -7,32 +12,25 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-   
 
     steps:
       - uses: actions/checkout@v2
 
       - name: Set up Node.js version
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v1
         with:
-          node-version: '16'
-          cache: 'npm'
+          node-version: '14.x'
 
       - name: npm install, build, and test
         run: |
           npm install
           npm run build --if-present
-          npm run test:ci --if-present
-
-      # Zip artifacts to speed things up
-      - name: Zip artifact for deployment
-        run: zip release.zip ./* -qr
-
+          npm run test --if-present
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v2
         with:
           name: node-app
-          path: release.zip
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
@@ -51,7 +49,7 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
-         app-name: 'ayushmanbharatapis'
-         publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D6FCF53256494B75A9B5914D7A0A3F54 }}
-         slot-name: 'Production'
-         package: release.zip
+          app-name: 'ayushmanbharatapis'
+          slot-name: 'Production'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D6FCF53256494B75A9B5914D7A0A3F54 }}
+          package: .
