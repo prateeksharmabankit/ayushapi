@@ -31,7 +31,7 @@ const multerS3 = require('multer-s3')
 const { Consumer } = require('sqs-consumer');
 const { ComprehendMedicalClient, DescribeEntitiesDetectionV2JobCommand } = require("@aws-sdk/client-comprehendmedical");
 const medicalrecord = require('../models/medicalrecord');
-const awsbucket=process.env.s3Bucket
+
 var upload = multer({
   storage: multerAzure({
     account: 'poacdocreport', //The name of the Azure storage account
@@ -53,13 +53,13 @@ AWS.config.update({
 const s3 = new AWS.S3({
   accessKeyId: process.env.accessKeyId,
   secretAccessKey: process.env.secretAccessKey,
-  Bucket: awsbucket
+  
 })
 
 
 const multerS3Config = multerS3({
   s3: s3,
-  bucket:  awsbucket,
+  bucket:  "textract-console-us-west-2-5e741523-38d7-48d2-abff-a67e50c46fd6",
   metadata: function (req, file, cb) {
     cb(null, { fieldName: file.fieldname });
   },
