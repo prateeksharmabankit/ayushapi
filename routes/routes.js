@@ -8,8 +8,7 @@ const UserModel = require('../models/user');
 const ChatModel = require('../models/chat');
 const MedicalRecordModel = require('../models/medicalrecord');
 const MedicalRecordAIModel = require('../models/medicalrecordaidata');
-
-
+const sleep = require('util').promisify(setTimeout);
 
 var moment = require('moment');
 var haversine = require("haversine-distance");
@@ -21,62 +20,40 @@ var fcm = require('fcm-notification');
 var FCM = new fcm('./nearwe-db88e-firebase-adminsdk-92i06-7d33a51877.json');
 const { success, error, validation } = require("./responseApi");
 const multer = require('multer')
-var multerAzure = require('multer-azure');
+
 const { exists } = require('../models/model');
 const { Mongoose } = require('mongoose');
+var multerAzure = require('multer-azure')
 
-const AWS = require('aws-sdk')
 const fs = require('fs')
-const multerS3 = require('multer-s3')
-const { Consumer } = require('sqs-consumer');
-const { ComprehendMedicalClient, DescribeEntitiesDetectionV2JobCommand } = require("@aws-sdk/client-comprehendmedical");
-const medicalrecord = require('../models/medicalrecord');
 
+
+
+const medicalrecord = require('../models/medicalrecord');
+const { TextAnalyticsClient, AzureKeyCredential } = require("@azure/ai-text-analytics");
+const client = new TextAnalyticsClient("https://ayushmedicaltestentity.cognitiveservices.azure.com/", new AzureKeyCredential("cd6f3c2b664140b28021da2313b2d050"));
+
+const { FormRecognizerClient } = require("@azure/ai-form-recognizer");
+const { ComputerVisionClient } = require("@azure/cognitiveservices-computervision");
+const { CognitiveServicesCredentials } = require("@azure/ms-rest-azure-js");
 var upload = multer({
   storage: multerAzure({
     account: 'poacdocreport', //The name of the Azure storage account
     key: 'EP8FxGYIqd4Z8qEqypUNrNcz65IPisC7lXDV7Qi8jyQkfIn4Vk3g+4fX01fVD+CmmtwpWRsKSM/Hn2hcJ35iNg==', //A key listed under Access keys in the storage account pane
     container: 'reports',  //Any container name, it will be created if it doesn't exist
     blobPathResolver: function (req, file, callback) {
-      var blobPath = GetRandomId(1080, 800000) + ".png"
+      var blobPath = GetRandomId(1080, 800000) + ".pdf"
       callback(null, blobPath);
     }
   })
 })
 
-AWS.config.update({
-  accessKeyId:"AKIAYR66VYOCLHFUXA4V",
-  secretAccessKey:"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",
-  region:"us-west-2"
-});
-
-const s3 = new AWS.S3({
-  accessKeyId:"AKIAYR66VYOCLHFUXA4V",
-  secretAccessKey:"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"
-
-  
-})
 
 
 
 
-const uploads = multer({
-  storage: multerS3({
-    bucket:'textract-console-us-west-2-5e741523-38d7-48d2-abff-a67e50c46fd6',
-    s3: s3,
-    
-    metadata: function (req, file, cb) {
-      cb(null, { fieldName: file.fieldname });
-    },
-    key: function (req, file, cb) {
-      cb(null, Date.now().toString() + ".pdf")
-    }
-  
-  }),
-  contentType: multerS3.AUTO_CONTENT_TYPE,
-  
 
-});
+
 
 
 let ts = Date.now();
@@ -762,185 +739,149 @@ router.get('/chats/getMyChatContent/:chatId', async (req, res) => {
 });
 
 
-router.post('/fileupload', uploads.single("file"), async function (req, res, next) {
+router.post('/fileupload', upload.single("file"), async function (req, res, next) {
 
-  console.log(req.file.location)
+
+
+
   const medicalrecordModel = new MedicalRecordModel({
     recordId: GetRandomId(10000, 1000000),
     dateTimeStamp: new Date(),
-    fileUrl: req.file.location,
+    fileUrl: req.file.url,
     fileType: 1,
     userId: req.body.userId,
     smartReport: 0
 
   })
-
-
- 
   medicalrecordModel.save()
   res.json(success("Record Saved! We will update once Smart Report Gets Generated", { data: 1 }, res.statusCode))
+  var printedTextSampleURL = req.file.url; // pdf/jpeg/png/tiff formats
 
+  const computerVisionKey = "f2dbc76f58874d1b8c87110eaefc55de";
+  const computerVisionEndPoint = "https://ayushmanocrdetectionpdf.cognitiveservices.azure.com/";
+  const cognitiveServiceCredentials = new CognitiveServicesCredentials(computerVisionKey);
+  const computerVisionClient = new ComputerVisionClient(cognitiveServiceCredentials, computerVisionEndPoint);
 
-const aa=await documentExtract(req.file.key, res, medicalrecordModel)
+  const printedResult = await readTextFromURL(computerVisionClient, printedTextSampleURL);
 
-})
+  var data = "";
+  var hasRecords = false
+  for (const page in printedResult) {
 
+    const result = printedResult[page];
+    if (result.lines) {
+      if (result.lines.length) {
+        for (const line of result.lines) {
 
-
-async function documentExtract(key, res, medicalrecordModel) {
-  return new Promise(resolve => {
-    var textract = new AWS.Textract({
-      region:"us-west-2",
-      endpoint: process.env.textractendpoint,
-      accessKeyId:"AKIAYR66VYOCLHFUXA4V",
-      secretAccessKey:"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"
-    })
-    var params = {
-      DocumentLocation: {
-        S3Object: {
-          Bucket:  "textract-console-us-west-2-5e741523-38d7-48d2-abff-a67e50c46fd6",
-          Name: key
+          data = data + " " + line.text + " "
         }
-      },
-      NotificationChannel: {
-        RoleArn: "arn:aws:iam::588340642692:role/textrole",
-
-        SNSTopicArn: "arn:aws:sns:us-west-2:588340642692:AmazonTextractMyTopic"
       }
-
     }
 
-    textract.startDocumentTextDetection(params, (err, data1) => {
-      console.log("startDocumentTextDetection")
-      if (err) {
-        console.error(err)
-        return resolve(err)
-      } else {
-        console.log(data1)
-        AWS.config.update({
-          region: "us-west-2",
-          accessKeyId:"AKIAYR66VYOCLHFUXA4V",
-  secretAccessKey:"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"
-        });
-        console.log("Consumer")
-        const app = Consumer.create({
-        
-          queueUrl:'https://sqs.us-west-2.amazonaws.com/588340642692/txtractque',
-          handleMessage: async (data) => {
-            console.log("Consumer created")
-            console.log(data)
-            var jsonObj = JSON.parse(data.Body);
-            if (jsonObj.JobId && data1.JobId) {
-              var textDetectionParams = { JobId: jsonObj.JobId, MaxResults: 1000 };
-              textract.getDocumentTextDetection(textDetectionParams, function (err, textDetectData) {
-                if (err) console.log(err, err.stack);
-                else {
-
-                  var txt = "";
-                  textDetectData.Blocks.forEach(block => {
-                    txt = txt + " " + block.Text
-
-                  })
-
-                
-                  const client = new AWS.ComprehendMedical()
-                  const params = {
-                    Text: txt
-                  };
-
-                  client.detectEntitiesV2(params, function (err, txtr) {
-
-                    var hasRecords = false
-                    txtr.Entities.forEach(block => {
-                      var TextName = "";
-                      var TEST_VALUE = "";
-                      var TEST_Unit = "";
-                     
-
-                      if (block.Category == "TEST_TREATMENT_PROCEDURE" && block.Score > 0.7 && block.Text != "RESULT IN INDEX" && block.Text != "Hence" && block.Text != "TextName" && block.Text != "Test" && block.Text != "test" && block.Text != "Lab" && block.Text != "Tests" && block.Text != "blood" && block.Text != "RESULT IN INDEX REMARKS") {
-                        TextName = block.Text
-                        
-                        if (block.Attributes) {
-
-                          block.Attributes.forEach(attribute => {
-                            if (attribute.Type == "TEST_VALUE") {
-                              TEST_VALUE = attribute.Text
-                              hasRecords = true
-                            }
-                          })
-                          block.Attributes.forEach(attribute => {
-                            if (attribute.Type == "TEST_UNIT") {
-                              TEST_Unit = attribute.Text
-                              hasRecords = true
-                            }
-                          })
-
-                        }
-                        if (TEST_VALUE != "") {
-                          hasRecords = true
-                          TEST_Unit == "" ? TEST_Unit : "N/A";
-                          const medicalRecordAIModel = new MedicalRecordAIModel({
-                            mraiId: GetRandomId(10000, 1000000),
-                            recordId: medicalrecordModel.recordId,
-                            testname: TextName,
-                            testvalue: TEST_VALUE,
-                            testunit: TEST_Unit
-
-                          })
-                          medicalRecordAIModel.save()
-
-                        }
+    else { }
+  }
 
 
-                      }
+  var documents = [
+    data
+  ];
+  const poller = await client.beginAnalyzeHealthcareEntities(documents);
+  const results = await poller.pollUntilDone();
+  for await (const result of results) {
 
 
+    if (!result.error) {
+      var TextName = "";
+      var TEST_VALUE = "";
+      var TEST_Unit = "";
+      for (const entity of result.entities) {
+
+        if (entity.category == "ExaminationName"&& entity.text != "RESULT IN INDEX" && entity.text!= "Hence" && entity.text != "TextName" && entity.text != "Test" && entity.text != "test" && entity.text != "Lab" && entity.text != "Tests" && entity.text != "blood" && entity.text != "Count" && entity.text != "RESULT IN INDEX REMARKS") {
+
+          TextName = entity.text
+          hasRecords = true
+
+        }
+        if (entity.category == "MeasurementValue") {
+
+          TEST_VALUE = entity.text
+          hasRecords = true
 
 
-                    })
-                    if(hasRecords)
-                    {
-                      var myquery = { recordId:medicalrecordModel.recordId};
-                      var newvalues = { $set: { smartReport: 1} };
-                      MedicalRecordModel.findOneAndUpdate(myquery,
-                        newvalues,
-                        function (err, response) {
-                          // do something
-                        });
-                    }
-                    else
-                    {var myquery = { recordId:medicalrecordModel.recordId};
-                    var newvalues = { $set: { smartReport: 2} };
-                    MedicalRecordModel.findOneAndUpdate(myquery,
-                      newvalues,
-                      function (err, response) {
-                        // do something
-                      });}
+        }
+        if (entity.category == "MeasurementUnit") {
+          TEST_Unit = entity.text
+          hasRecords = true
+          //
+        }
 
-                  })
+        if (TextName != "" && TEST_VALUE != "" && TEST_Unit != "") {
+          console.log(TextName + "__" + TEST_VALUE + "___" + TEST_Unit)
+          const medicalRecordAIModel = new MedicalRecordAIModel({
+            mraiId: GetRandomId(10000, 1000000),
+            recordId: medicalrecordModel.recordId,
+            testname: TextName,
+            testvalue: TEST_VALUE,
+            testunit: TEST_Unit
 
-
-
-                }
+          })
+          medicalRecordAIModel.save()
+          TextName = "";
+          TEST_VALUE = "";
+          TEST_Unit = "";
+          if(hasRecords)
+          {
+            var myquery = { recordId:medicalrecordModel.recordId};
+            var newvalues = { $set: { smartReport: 1} };
+            MedicalRecordModel.findOneAndUpdate(myquery,
+              newvalues,
+              function (err, response) {
+                // do something
               });
-            }
           }
-        });
+          else
+          {var myquery = { recordId:medicalrecordModel.recordId};
+          var newvalues = { $set: { smartReport: 2} };
+          MedicalRecordModel.findOneAndUpdate(myquery,
+            newvalues,
+            function (err, response) {
+              // do something
+            });}
+        
+          continue;
 
-        app.on('error', (err) => {
-          console.error(err.message);
-        });
 
-        app.on('processing_error', (err) => {
-          console.error(err.message);
-        });
+        }
 
-        app.start();
+
 
       }
-    })
-  })
+
+    } else console.error("\tError:", result.error);
+  }
+ 
+ 
+
+
+  //const aa=await documentExtract(req.file.key, res, medicalrecordModel)
+
+})
+async function readTextFromURL(client, url) {
+  // To recognize text in a local image, replace client.read() with readTextInStream() as shown:
+  let result = await client.read(url);
+  // Operation ID is last path segment of operationLocation (a URL)
+  let operation = result.operationLocation.split('/').slice(-1)[0];
+
+  // Wait for read recognition to complete
+  // result.status is initially undefined, since it's the result of read
+  while (result.status !== "succeeded") { await sleep(1000); result = await client.getReadResult(operation); }
+
+  return result.analyzeResult.readResults; // Return the first page of result. Replace [0] with the desired page if this is a multi-page file such as .pdf or .tiff.
 }
+
+
+
+
 
 
 router.get('/medicalreport/GetReport/:userId', async (req, res) => {
@@ -949,8 +890,8 @@ router.get('/medicalreport/GetReport/:userId', async (req, res) => {
   MedicalRecordModel.aggregate([
 
     { $match: { userId: Number(userId) } },
-   
-    
+
+
   ]).exec(function (err, students) {
 
     students.forEach(result => {

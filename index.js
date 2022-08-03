@@ -30,11 +30,11 @@ const routes = require('./routes/routes');
 app.use('/api', routes)
 
 
-app.listen(port = process.env.PORT, () => {
-    console.log(`Server Started at ${3000}`)
+app.listen(port =3001, () => {
+    console.log(`Server Started at ${3001}`)
    
 })
 
 /* app.listen( process.env.PORT, () => {
-    console.log(`Server Started at ${3000}`)
+    console.log(`Server Started at ${3000}`) 
 }) */
