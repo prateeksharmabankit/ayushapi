@@ -905,4 +905,22 @@ router.get('/medicalreport/GetReport/:userId', async (req, res) => {
   });
 
 })
+router.get('/medicalreport/GetSmartReport/:recordId', async (req, res) => {
+
+  const recordId = req.params.recordId
+  MedicalRecordAIModel.aggregate([
+
+    { $match: { recordId: Number(recordId) } },
+
+
+  ]).exec(function (err, students) {
+
+  
+
+
+    
+    res.json(success("OK", { data: students }, res.statusCode))
+  });
+
+})
 module.exports = router;
