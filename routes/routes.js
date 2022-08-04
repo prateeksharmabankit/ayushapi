@@ -47,6 +47,17 @@ var upload = multer({
     }
   })
 })
+var uploadimage = multer({
+  storage: multerAzure({
+    account: 'poacdocreport', //The name of the Azure storage account
+    key: 'EP8FxGYIqd4Z8qEqypUNrNcz65IPisC7lXDV7Qi8jyQkfIn4Vk3g+4fX01fVD+CmmtwpWRsKSM/Hn2hcJ35iNg==', //A key listed under Access keys in the storage account pane
+    container: 'reports',  //Any container name, it will be created if it doesn't exist
+    blobPathResolver: function (req, file, callback) {
+      var blobPath = GetRandomId(1080, 800000) + ".jpg"
+      callback(null, blobPath);
+    }
+  })
+})
 
 
 
@@ -749,6 +760,133 @@ router.post('/fileupload', upload.single("file"), async function (req, res, next
     dateTimeStamp: new Date(),
     fileUrl: req.file.url,
     fileType: 1,
+    userId: req.body.userId,
+    smartReport: 0
+
+  })
+  medicalrecordModel.save()
+  res.json(success("Record Saved! We will update once Smart Report Gets Generated", { data: 1 }, res.statusCode))
+  var printedTextSampleURL = req.file.url; // pdf/jpeg/png/tiff formats
+
+  const computerVisionKey = "f2dbc76f58874d1b8c87110eaefc55de";
+  const computerVisionEndPoint = "https://ayushmanocrdetectionpdf.cognitiveservices.azure.com/";
+  const cognitiveServiceCredentials = new CognitiveServicesCredentials(computerVisionKey);
+  const computerVisionClient = new ComputerVisionClient(cognitiveServiceCredentials, computerVisionEndPoint);
+
+  const printedResult = await readTextFromURL(computerVisionClient, printedTextSampleURL);
+
+  var data = "";
+  var hasRecords = false
+  for (const page in printedResult) {
+
+    const result = printedResult[page];
+    if (result.lines) {
+      if (result.lines.length) {
+        for (const line of result.lines) {
+
+          data = data + " " + line.text + " "
+        }
+      }
+    }
+
+    else { }
+  }
+
+
+  var documents = [
+    data
+  ];
+  const poller = await client.beginAnalyzeHealthcareEntities(documents);
+  const results = await poller.pollUntilDone();
+  for await (const result of results) {
+
+
+    if (!result.error) {
+      var TextName = "";
+      var TEST_VALUE = "";
+      var TEST_Unit = "";
+      for (const entity of result.entities) {
+
+        if (entity.category == "ExaminationName"&& entity.text != "RESULT IN INDEX" && entity.text!= "Hence" && entity.text != "TextName" && entity.text != "Test" && entity.text != "test" && entity.text != "Lab" && entity.text != "Tests" && entity.text != "blood" && entity.text != "Count" && entity.text != "RESULT IN INDEX REMARKS") {
+
+          TextName = entity.text
+          hasRecords = true
+
+        }
+        if (entity.category == "MeasurementValue") {
+
+          TEST_VALUE = entity.text
+          hasRecords = true
+
+
+        }
+        if (entity.category == "MeasurementUnit") {
+          TEST_Unit = entity.text
+          hasRecords = true
+          //
+        }
+
+        if (TextName != "" && TEST_VALUE != "" && TEST_Unit != "") {
+          console.log(TextName + "__" + TEST_VALUE + "___" + TEST_Unit)
+          const medicalRecordAIModel = new MedicalRecordAIModel({
+            mraiId: GetRandomId(10000, 1000000),
+            recordId: medicalrecordModel.recordId,
+            testname: TextName,
+            testvalue: TEST_VALUE,
+            testunit: TEST_Unit
+
+          })
+          medicalRecordAIModel.save()
+          TextName = "";
+          TEST_VALUE = "";
+          TEST_Unit = "";
+          if(hasRecords)
+          {
+            var myquery = { recordId:medicalrecordModel.recordId};
+            var newvalues = { $set: { smartReport: 1} };
+            MedicalRecordModel.findOneAndUpdate(myquery,
+              newvalues,
+              function (err, response) {
+                // do something
+              });
+          }
+          else
+          {var myquery = { recordId:medicalrecordModel.recordId};
+          var newvalues = { $set: { smartReport: 2} };
+          MedicalRecordModel.findOneAndUpdate(myquery,
+            newvalues,
+            function (err, response) {
+              // do something
+            });}
+        
+          continue;
+
+
+        }
+
+
+
+      }
+
+    } else console.error("\tError:", result.error);
+  }
+ 
+ 
+
+
+  //const aa=await documentExtract(req.file.key, res, medicalrecordModel)
+
+})
+router.post('/fileuploadImage', uploadimage.single("file"), async function (req, res, next) {
+
+
+
+
+  const medicalrecordModel = new MedicalRecordModel({
+    recordId: GetRandomId(10000, 1000000),
+    dateTimeStamp: new Date(),
+    fileUrl: req.file.url,
+    fileType: 2,
     userId: req.body.userId,
     smartReport: 0
 
