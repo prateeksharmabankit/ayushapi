@@ -809,12 +809,14 @@ router.post('/fileupload', upload.single("file"), async function (req, res, next
       var TextName = "";
       var TEST_VALUE = "";
       var TEST_Unit = "";
+      var NormalizedText = "";
       for (const entity of result.entities) {
 
         if (entity.category == "ExaminationName"&& entity.text != "RESULT IN INDEX" && entity.text!= "Hence" && entity.text != "TextName" && entity.text != "Test" && entity.text != "test" && entity.text != "Lab" && entity.text != "Tests" && entity.text != "blood" && entity.text != "Count" && entity.text != "RESULT IN INDEX REMARKS") {
 
           TextName = entity.text
           hasRecords = true
+          NormalizedText=entity.normalizedText
 
         }
         if (entity.category == "MeasurementValue") {
@@ -831,13 +833,40 @@ router.post('/fileupload', upload.single("file"), async function (req, res, next
         }
 
         if (TextName != "" && TEST_VALUE != "" && TEST_Unit != "") {
-          console.log(TextName + "__" + TEST_VALUE + "___" + TEST_Unit)
+          var vitalId=0
+          NormalizedText ? NormalizedText.toString() : 'Undetermined'
+          const data = new VitalDetailsSchema({
+  
+            vitalId: GetRandomId(10000, 1000000),
+            normalizedText: NormalizedText==""?"Undetermined":NormalizedText,
+            normalvalues:"Undetermined",
+            description:"Undetermined"
+           
+        
+          })
+          const user = await VitalDetailsSchema.findOne({
+            normalizedText:NormalizedText
+        
+          });
+          if (user == null || user.length == 0) {
+            const dataToSave = await data.save();
+            console.log("not found"+vitalId)
+            vitalId=data.vitalId
+            
+          }
+          else {
+            vitalId=user.vitalId
+            console.log("found"+vitalId)
+          }
+
           const medicalRecordAIModel = new MedicalRecordAIModel({
             mraiId: GetRandomId(10000, 1000000),
             recordId: medicalrecordModel.recordId,
             testname: TextName,
             testvalue: TEST_VALUE,
-            testunit: TEST_Unit
+            testunit: TEST_Unit,
+            normalizedText:NormalizedText,
+            vitalId:vitalId
 
           })
           medicalRecordAIModel.save()
