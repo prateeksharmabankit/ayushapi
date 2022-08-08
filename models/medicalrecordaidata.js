@@ -38,6 +38,10 @@ const medicalrecordaidataSchema = new mongoose.Schema({
         
        
     }], 
+    dated :{
+       
+        type: String
+    },
    
   
 

@@ -193,28 +193,28 @@ router.post('/post', async (req, res) => {
 
 router.get('/Posts/GetAllPosts/:userId/:latitude/:longitude', async (req, res) => {
   Model.aggregate([
-    
+
     {
-    $lookup: {
-      from: "users",
-      localField: "userId",
-      foreignField: "userId",
-      as: "users"
+      $lookup: {
+        from: "users",
+        localField: "userId",
+        foreignField: "userId",
+        as: "users"
+      },
+
     },
 
-  },
-
-  {
-    $unwind: '$users'
-  }
-    , {
-    $project: {
-      _id: 0, "users.image": 1, "users.userId": 1, "postId": 1, "title": 1, "isAnonymous": 1,
-
-      "postViews": 1, "latitude": 1, "longitude": 1, "postType": 1, "categoryName": 1,
-      "subCategories": 1, "dateTimeStamp": 1, "users.name": 1, "isLiked": 1, "imageUrl": 1
+    {
+      $unwind: '$users'
     }
-  }
+    , {
+      $project: {
+        _id: 0, "users.image": 1, "users.userId": 1, "postId": 1, "title": 1, "isAnonymous": 1,
+
+        "postViews": 1, "latitude": 1, "longitude": 1, "postType": 1, "categoryName": 1,
+        "subCategories": 1, "dateTimeStamp": 1, "users.name": 1, "isLiked": 1, "imageUrl": 1
+      }
+    }
   ]).exec(function (err, students) {
 
     students.forEach(result => {
@@ -802,6 +802,7 @@ router.post('/fileupload', upload.single("file"), async function (req, res, next
   ];
   const poller = await client.beginAnalyzeHealthcareEntities(documents);
   const results = await poller.pollUntilDone();
+  var Dated = "";
   for await (const result of results) {
 
 
@@ -811,12 +812,14 @@ router.post('/fileupload', upload.single("file"), async function (req, res, next
       var TEST_Unit = "";
       var NormalizedText = "";
       for (const entity of result.entities) {
-
-        if (entity.category == "ExaminationName"&& entity.text != "RESULT IN INDEX" && entity.text!= "Hence" && entity.text != "TextName" && entity.text != "Test" && entity.text != "test" && entity.text != "Lab" && entity.text != "Tests" && entity.text != "blood" && entity.text != "Count" && entity.text != "RESULT IN INDEX REMARKS") {
+        if (entity.category == "Date"&&Dated=="") {
+          Dated=entity.text
+        }
+        if (entity.category == "ExaminationName" && entity.text != "RESULT IN INDEX" && entity.text != "Hence" && entity.text != "TextName" && entity.text != "Test" && entity.text != "test" && entity.text != "Lab" && entity.text != "Tests" && entity.text != "blood" && entity.text != "Count" && entity.text != "RESULT IN INDEX REMARKS") {
 
           TextName = entity.text
           hasRecords = true
-          NormalizedText=entity.normalizedText
+          NormalizedText = entity.normalizedText
 
         }
         if (entity.category == "MeasurementValue") {
@@ -833,30 +836,30 @@ router.post('/fileupload', upload.single("file"), async function (req, res, next
         }
 
         if (TextName != "" && TEST_VALUE != "" && TEST_Unit != "") {
-          var vitalId=0
+          var vitalId = 0
           NormalizedText ? NormalizedText.toString() : 'Undetermined'
           const data = new VitalDetailsSchema({
-  
+
             vitalId: GetRandomId(10000, 1000000),
-            normalizedText: NormalizedText==""?"Undetermined":NormalizedText,
-            normalvalues:"Undetermined",
-            description:"Undetermined"
-           
-        
+            normalizedText: NormalizedText == "" ? "Undetermined" : NormalizedText,
+            normalvalues: "Undetermined",
+            description: "Undetermined"
+
+
           })
           const user = await VitalDetailsSchema.findOne({
-            normalizedText:NormalizedText
-        
+            normalizedText: NormalizedText
+
           });
           if (user == null || user.length == 0) {
             const dataToSave = await data.save();
-            console.log("not found"+vitalId)
-            vitalId=data.vitalId
-            
+            console.log("not found" + vitalId)
+            vitalId = data.vitalId
+
           }
           else {
-            vitalId=user.vitalId
-            console.log("found"+vitalId)
+            vitalId = user.vitalId
+            console.log("found" + vitalId)
           }
 
           const medicalRecordAIModel = new MedicalRecordAIModel({
@@ -865,33 +868,34 @@ router.post('/fileupload', upload.single("file"), async function (req, res, next
             testname: TextName,
             testvalue: TEST_VALUE,
             testunit: TEST_Unit,
-            normalizedText:NormalizedText,
-            vitalId:vitalId
+            normalizedText: NormalizedText,
+            vitalId: vitalId,
+            dated:Dated
 
           })
           medicalRecordAIModel.save()
           TextName = "";
           TEST_VALUE = "";
           TEST_Unit = "";
-          if(hasRecords)
-          {
-            var myquery = { recordId:medicalrecordModel.recordId};
-            var newvalues = { $set: { smartReport: 1} };
+          if (hasRecords) {
+            var myquery = { recordId: medicalrecordModel.recordId };
+            var newvalues = { $set: { smartReport: 1 } };
             MedicalRecordModel.findOneAndUpdate(myquery,
               newvalues,
               function (err, response) {
                 // do something
               });
           }
-          else
-          {var myquery = { recordId:medicalrecordModel.recordId};
-          var newvalues = { $set: { smartReport: 2} };
-          MedicalRecordModel.findOneAndUpdate(myquery,
-            newvalues,
-            function (err, response) {
-              // do something
-            });}
-        
+          else {
+            var myquery = { recordId: medicalrecordModel.recordId };
+            var newvalues = { $set: { smartReport: 2 } };
+            MedicalRecordModel.findOneAndUpdate(myquery,
+              newvalues,
+              function (err, response) {
+                // do something
+              });
+          }
+
           continue;
 
 
@@ -903,8 +907,8 @@ router.post('/fileupload', upload.single("file"), async function (req, res, next
 
     } else console.error("\tError:", result.error);
   }
- 
- 
+
+
 
 
   //const aa=await documentExtract(req.file.key, res, medicalrecordModel)
@@ -958,6 +962,7 @@ router.post('/fileuploadImage', uploadimage.single("file"), async function (req,
   ];
   const poller = await client.beginAnalyzeHealthcareEntities(documents);
   const results = await poller.pollUntilDone();
+  var Dated = "";
   for await (const result of results) {
 
 
@@ -966,12 +971,17 @@ router.post('/fileuploadImage', uploadimage.single("file"), async function (req,
       var TEST_VALUE = "";
       var TEST_Unit = "";
       var NormalizedText = "";
+ 
       for (const entity of result.entities) {
 
-        if (entity.category == "ExaminationName"&& entity.text != "RESULT IN INDEX" && entity.text!= "Hence" && entity.text != "TextName" && entity.text != "Test" && entity.text != "test" && entity.text != "Lab" && entity.text != "Tests" && entity.text != "blood" && entity.text != "Count" && entity.text != "RESULT IN INDEX REMARKS") {
+        if (entity.category == "Date"&&Dated=="") {
+          Dated=entity.text
+        }
+
+        if (entity.category == "ExaminationName" && entity.text != "RESULT IN INDEX" && entity.text != "Hence" && entity.text != "TextName" && entity.text != "Test" && entity.text != "test" && entity.text != "Lab" && entity.text != "Tests" && entity.text != "blood" && entity.text != "Count" && entity.text != "RESULT IN INDEX REMARKS") {
 
           TextName = entity.text
-          NormalizedText=entity.normalizedText
+          NormalizedText = entity.normalizedText
           hasRecords = true
 
         }
@@ -989,33 +999,33 @@ router.post('/fileuploadImage', uploadimage.single("file"), async function (req,
         }
 
         if (TextName != "" && TEST_VALUE != "" && TEST_Unit != "") {
-        
 
-          var vitalId=0
+
+          var vitalId = 0
           NormalizedText ? NormalizedText.toString() : 'Undetermined'
           const data = new VitalDetailsSchema({
-  
+
             vitalId: GetRandomId(10000, 1000000),
-            normalizedText: NormalizedText==""?"Undetermined":NormalizedText,
-            normalvalues:"Undetermined",
-            description:"Undetermined"
-           
-        
+            normalizedText: NormalizedText == "" ? "Undetermined" : NormalizedText,
+            normalvalues: "Undetermined",
+            description: "Undetermined"
+
+
           })
-        console.log(NormalizedText)
+
           const user = await VitalDetailsSchema.findOne({
-            normalizedText:NormalizedText
-        
+            normalizedText: NormalizedText
+
           });
           if (user == null || user.length == 0) {
             const dataToSave = await data.save();
-            console.log("not found"+vitalId)
-            vitalId=data.vitalId
-            
+
+            vitalId = data.vitalId
+
           }
           else {
-            vitalId=user.vitalId
-            console.log("found"+vitalId)
+            vitalId = user.vitalId
+
           }
 
 
@@ -1065,39 +1075,41 @@ router.post('/fileuploadImage', uploadimage.single("file"), async function (req,
             testname: TextName,
             testvalue: TEST_VALUE,
             testunit: TEST_Unit,
-            normalizedText:NormalizedText,
-            vitalId:vitalId
+            normalizedText: NormalizedText,
+            vitalId: vitalId,
+            dated:Dated
 
           })
           medicalRecordAIModel.save()
           TextName = "";
           TEST_VALUE = "";
           TEST_Unit = "";
-          if(hasRecords)
-          {
-            var myquery = { recordId:medicalrecordModel.recordId};
-            var newvalues = { $set: { smartReport: 1} };
+          if (hasRecords) {
+            var myquery = { recordId: medicalrecordModel.recordId };
+            var newvalues = { $set: { smartReport: 1 } };
             MedicalRecordModel.findOneAndUpdate(myquery,
               newvalues,
               function (err, response) {
                 // do something
               });
           }
-          else
-          {var myquery = { recordId:medicalrecordModel.recordId};
-          var newvalues = { $set: { smartReport: 2} };
-          MedicalRecordModel.findOneAndUpdate(myquery,
-            newvalues,
-            function (err, response) {
-              // do something
-            });}
-        
+          else {
+            var myquery = { recordId: medicalrecordModel.recordId };
+            var newvalues = { $set: { smartReport: 2 } };
+            MedicalRecordModel.findOneAndUpdate(myquery,
+              newvalues,
+              function (err, response) {
+                // do something
+              });
+          }
+
           continue;
- } }
+        }
+      }
 
     } else console.error("\tError:", result.error);
   }
- 
+
 
 })
 async function readTextFromURL(client, url) {
@@ -1141,9 +1153,9 @@ router.get('/medicalreport/GetReport/:userId', async (req, res) => {
 })
 router.get('/medicalreport/GetSmartReport/:recordId', async (req, res) => {
   const recordId = req.params.recordId
-  
-    MedicalRecordAIModel.aggregate([
-    { $match: {  recordId: Number(recordId)  } },
+
+  MedicalRecordAIModel.aggregate([
+    { $match: { recordId: Number(recordId) } },
 
     {
 
@@ -1216,7 +1228,7 @@ router.post('/vitaldetails/post', async (req, res) => {
 
 
   const posts = new VitalDetailsSchema({
-  
+
     vitalId: GetRandomId(10000, 1000000),
     normalizedText: req.body.normalizedText,
     normalvalues: req.body.normalvalues,
