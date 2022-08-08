@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-
+const Schema = mongoose.Schema;
 const medicalrecordaidataSchema = new mongoose.Schema({
     mraiId :{
         
@@ -20,7 +20,26 @@ const medicalrecordaidataSchema = new mongoose.Schema({
        
         type: String
     },
+    normalizedText :{
+       
+        type: String
+    },
+    vitalId :{
+        
+        type: Number
+    },
+    vitaldetailsschemas:[{
+        vitaldetails:{
+           
+            type: Schema.Types.ObjectId,
+            ref: "vitaldetailsschemas"
+        },
+        
+        
+       
+    }], 
    
+  
 
    
 })

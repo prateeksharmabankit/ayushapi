@@ -8,6 +8,8 @@ const UserModel = require('../models/user');
 const ChatModel = require('../models/chat');
 const MedicalRecordModel = require('../models/medicalrecord');
 const MedicalRecordAIModel = require('../models/medicalrecordaidata');
+
+const VitalDetailsSchema = require('../models/vitalDetails');
 const sleep = require('util').promisify(setTimeout);
 
 var moment = require('moment');
@@ -190,7 +192,9 @@ router.post('/post', async (req, res) => {
 
 
 router.get('/Posts/GetAllPosts/:userId/:latitude/:longitude', async (req, res) => {
-  Model.aggregate([{
+  Model.aggregate([
+    
+    {
     $lookup: {
       from: "users",
       localField: "userId",
@@ -932,11 +936,13 @@ router.post('/fileuploadImage', uploadimage.single("file"), async function (req,
       var TextName = "";
       var TEST_VALUE = "";
       var TEST_Unit = "";
+      var NormalizedText = "";
       for (const entity of result.entities) {
 
         if (entity.category == "ExaminationName"&& entity.text != "RESULT IN INDEX" && entity.text!= "Hence" && entity.text != "TextName" && entity.text != "Test" && entity.text != "test" && entity.text != "Lab" && entity.text != "Tests" && entity.text != "blood" && entity.text != "Count" && entity.text != "RESULT IN INDEX REMARKS") {
 
           TextName = entity.text
+          NormalizedText=entity.normalizedText
           hasRecords = true
 
         }
@@ -954,13 +960,84 @@ router.post('/fileuploadImage', uploadimage.single("file"), async function (req,
         }
 
         if (TextName != "" && TEST_VALUE != "" && TEST_Unit != "") {
-          console.log(TextName + "__" + TEST_VALUE + "___" + TEST_Unit)
+        
+
+          var vitalId=0
+          NormalizedText ? NormalizedText.toString() : 'Undetermined'
+          const data = new VitalDetailsSchema({
+  
+            vitalId: GetRandomId(10000, 1000000),
+            normalizedText: NormalizedText==""?"Undetermined":NormalizedText,
+            normalvalues:"Undetermined",
+            description:"Undetermined"
+           
+        
+          })
+        console.log(NormalizedText)
+          const user = await VitalDetailsSchema.findOne({
+            normalizedText:NormalizedText
+        
+          });
+          if (user == null || user.length == 0) {
+            const dataToSave = await data.save();
+            console.log("not found"+vitalId)
+            vitalId=data.vitalId
+            
+          }
+          else {
+            vitalId=user.vitalId
+            console.log("found"+vitalId)
+          }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
           const medicalRecordAIModel = new MedicalRecordAIModel({
             mraiId: GetRandomId(10000, 1000000),
             recordId: medicalrecordModel.recordId,
             testname: TextName,
             testvalue: TEST_VALUE,
-            testunit: TEST_Unit
+            testunit: TEST_Unit,
+            normalizedText:NormalizedText,
+            vitalId:vitalId
 
           })
           medicalRecordAIModel.save()
@@ -987,21 +1064,11 @@ router.post('/fileuploadImage', uploadimage.single("file"), async function (req,
             });}
         
           continue;
-
-
-        }
-
-
-
-      }
+ } }
 
     } else console.error("\tError:", result.error);
   }
  
- 
-
-
-  //const aa=await documentExtract(req.file.key, res, medicalrecordModel)
 
 })
 async function readTextFromURL(client, url) {
@@ -1044,21 +1111,93 @@ router.get('/medicalreport/GetReport/:userId', async (req, res) => {
 
 })
 router.get('/medicalreport/GetSmartReport/:recordId', async (req, res) => {
-
   const recordId = req.params.recordId
-  MedicalRecordAIModel.aggregate([
-
-    { $match: { recordId: Number(recordId) } },
-
-
-  ]).exec(function (err, students) {
-
   
+    MedicalRecordAIModel.aggregate([
+    { $match: {  recordId: Number(recordId)  } },
 
+    {
 
-    
+      $lookup: {
+        from: "vitaldetailsschemas",
+        localField: "vitalId",
+        foreignField: "vitalId",
+        as: "vitaldetails"
+      },
+
+    }
+    ,
+  ]).exec(function (err, students) {
     res.json(success("OK", { data: students }, res.statusCode))
   });
 
 })
+router.post('/chatcontent/post', async (req, res) => {
+  var user = new ChatContentModel(req.body)
+  user.dateTimeStamp = new Date(),
+    await user.save();
+  res.json(success("Chats content saved", { data: user }, res.statusCode))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+})
+
+
+router.post('/vitaldetails/post', async (req, res) => {
+
+
+  const posts = new VitalDetailsSchema({
+  
+    vitalId: GetRandomId(10000, 1000000),
+    normalizedText: req.body.normalizedText,
+    normalvalues: req.body.normalvalues,
+    description: req.body.description,
+
+  })
+  posts.save()
+  res.json(success("OK", { data: posts }, res.statusCode))
+
+
+
+});
 module.exports = router;
