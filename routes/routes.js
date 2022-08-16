@@ -1244,27 +1244,14 @@ router.post('/vitaldetails/post', async (req, res) => {
 
 });
 
-router.get('/vitaldetails/getcharts/:chatId', async (req, res) => {
-  const _chatId = req.params.chatId
- 
-
+router.get('/vitaldetails/getcharts/:userId/:vitalId', async (req, res) => {
+  const userId = req.params.userId
+  const vitalId = req.params.vitalId
   try {
-
-
-    ChatContentModel.aggregate([
-      { $match: { $or: [{ sender: Number(user.sender) }, { reciever: Number(user.sender) }] } },
-
-    
-
-
-
+    MedicalRecordAIModel.aggregate([
+      { $match: { $and: [{ userId: Number(userId) }, { vitalId: Number(vitalId) }] } },
 
     ]).exec(function (err, students) {
-
-      students.forEach(result => {
-       
-
-      });
       res.json(success("OK", { data: students }, res.statusCode))
     });
   }
