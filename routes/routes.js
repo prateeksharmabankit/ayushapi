@@ -870,7 +870,8 @@ router.post('/fileupload', upload.single("file"), async function (req, res, next
             testunit: TEST_Unit,
             normalizedText: NormalizedText,
             vitalId: vitalId,
-            dated:Dated
+            dated:Dated,
+            userId:req.body.userId
 
           })
           medicalRecordAIModel.save()
@@ -955,7 +956,7 @@ router.post('/fileuploadImage', uploadimage.single("file"), async function (req,
 
     else { }
   }
-
+console.log(data)
 
   var documents = [
     data
@@ -1077,7 +1078,8 @@ router.post('/fileuploadImage', uploadimage.single("file"), async function (req,
             testunit: TEST_Unit,
             normalizedText: NormalizedText,
             vitalId: vitalId,
-            dated:Dated
+            dated:Dated,
+            userId:req.body.userId
 
           })
           medicalRecordAIModel.save()
@@ -1240,5 +1242,34 @@ router.post('/vitaldetails/post', async (req, res) => {
 
 
 
+});
+
+router.get('/vitaldetails/getcharts/:chatId', async (req, res) => {
+  const _chatId = req.params.chatId
+ 
+
+  try {
+
+
+    ChatContentModel.aggregate([
+      { $match: { $or: [{ sender: Number(user.sender) }, { reciever: Number(user.sender) }] } },
+
+    
+
+
+
+
+    ]).exec(function (err, students) {
+
+      students.forEach(result => {
+       
+
+      });
+      res.json(success("OK", { data: students }, res.statusCode))
+    });
+  }
+  catch (errors) {
+    res.json(error(errors.message, res.statusCode))
+  }
 });
 module.exports = router;

@@ -43,7 +43,10 @@ const medicalrecordaidataSchema = new mongoose.Schema({
         type: String
     },
    
-  
+    userId :{
+        
+        type: Number
+    },
 
    
 })
