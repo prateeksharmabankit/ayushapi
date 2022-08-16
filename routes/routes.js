@@ -1259,4 +1259,18 @@ router.get('/vitaldetails/getcharts/:userId/:vitalId', async (req, res) => {
     res.json(error(errors.message, res.statusCode))
   }
 });
+router.get('/vitaldetails/updateVitalValue/:mraiId/:testvalue/:testname', async (req, res) => {
+
+  var myquery = { mraiId: Number(req.params.mraiId) };
+  var newvalues = { $set: { testvalue: req.params.testvalue ,testname: req.params.testname} };
+  MedicalRecordAIModel.findOneAndUpdate(myquery,
+    newvalues,
+    function (err, response) {
+      // do something
+    });
+  res.json(success("Record Successfully Updated", { data: "1" }, res.statusCode))
+
+
+})
+
 module.exports = router;
