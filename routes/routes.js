@@ -1272,5 +1272,147 @@ router.get('/vitaldetails/updateVitalValue/:mraiId/:testvalue/:testname', async 
 
 
 })
+router.post('/vitaldetails/addnewLabVital',  async  (req, res) => {
 
+ var recordId=req.body.recordId
+ var userId=req.body.userId
+ var data=req.body.data
+ var Dated=req.body.dated
+ console.log(data+"aa")
+ res.json(success("Record Added Updated", { data: "1" }, res.statusCode))
+  var documents = [
+    data
+  ];
+  const poller = await client.beginAnalyzeHealthcareEntities(documents);
+  const results = await poller.pollUntilDone();
+
+  for await (const result of results) {
+
+
+    if (!result.error) {
+      var TextName = "";
+      var TEST_VALUE = "";
+      var TEST_Unit = "";
+      var NormalizedText = "";
+ 
+      for (const entity of result.entities) {
+
+
+        if (entity.category == "ExaminationName" && entity.text != "RESULT IN INDEX" && entity.text != "Hence" && entity.text != "TextName" && entity.text != "Test" && entity.text != "test" && entity.text != "Lab" && entity.text != "Tests" && entity.text != "blood" && entity.text != "Count" && entity.text != "RESULT IN INDEX REMARKS") {
+
+          TextName = entity.text
+          NormalizedText = entity.normalizedText
+          hasRecords = true
+
+        }
+        if (entity.category == "MeasurementValue") {
+
+          TEST_VALUE = entity.text
+          hasRecords = true
+
+
+        }
+        if (entity.category == "MeasurementUnit") {
+          TEST_Unit = entity.text
+          hasRecords = true
+          //
+        }
+
+        if (TextName != "" && TEST_VALUE != "" && TEST_Unit != "") {
+
+
+          var vitalId = 0
+          NormalizedText ? NormalizedText.toString() : 'Undetermined'
+          const data = new VitalDetailsSchema({
+
+            vitalId: GetRandomId(10000, 1000000),
+            normalizedText: NormalizedText == "" ? "Undetermined" : NormalizedText,
+            normalvalues: "Undetermined",
+            description: "Undetermined"
+
+
+          })
+
+          const user = await VitalDetailsSchema.findOne({
+            normalizedText: NormalizedText
+
+          });
+          if (user == null || user.length == 0) {
+            const dataToSave = await data.save();
+
+            vitalId = data.vitalId
+
+          }
+          else {
+            vitalId = user.vitalId
+
+          }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          const medicalRecordAIModel = new MedicalRecordAIModel({
+            mraiId: GetRandomId(10000, 1000000),
+            recordId:recordId,
+            testname: TextName,
+            testvalue: TEST_VALUE,
+            testunit: TEST_Unit,
+            normalizedText: NormalizedText,
+            vitalId: vitalId,
+            dated:Dated,
+            userId:userId
+
+          })
+          medicalRecordAIModel.save()
+          TextName = "";
+          TEST_VALUE = "";
+          TEST_Unit = "";
+         
+          continue;
+        }
+      }
+
+    } else console.error("\tError:", result.error);
+  }
+
+
+})
 module.exports = router;
