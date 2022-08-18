@@ -10,6 +10,9 @@ const MedicalRecordModel = require('../models/medicalrecord');
 const MedicalRecordAIModel = require('../models/medicalrecordaidata');
 
 const VitalDetailsSchema = require('../models/vitalDetails');
+const MajorVitalsSchema = require('../models/majorvitals');
+
+
 const sleep = require('util').promisify(setTimeout);
 
 var moment = require('moment');
@@ -1235,6 +1238,8 @@ router.post('/vitaldetails/post', async (req, res) => {
     normalizedText: req.body.normalizedText,
     normalvalues: req.body.normalvalues,
     description: req.body.description,
+    majorVitalId: req.body.majorVitalId,
+    
 
   })
   posts.save()
@@ -1413,6 +1418,267 @@ router.post('/vitaldetails/addnewLabVital',  async  (req, res) => {
     } else console.error("\tError:", result.error);
   }
 
+
+})
+router.post('/fileuploadImagePrescriptions', uploadimage.single("file"), async function (req, res, next) {
+
+
+
+
+  const medicalrecordModel = new MedicalRecordModel({
+    recordId: GetRandomId(10000, 1000000),
+    dateTimeStamp: new Date(),
+    fileUrl: req.file.url,
+    fileType: 2,
+    userId: req.body.userId,
+    smartReport: 0
+
+  })
+ // medicalrecordModel.save()
+  res.json(success("Record Saved! We will update once Smart Report Gets Generated", { data: 1 }, res.statusCode))
+  var printedTextSampleURL = req.file.url; // pdf/jpeg/png/tiff formats
+
+  const computerVisionKey = "f2dbc76f58874d1b8c87110eaefc55de";
+  const computerVisionEndPoint = "https://ayushmanocrdetectionpdf.cognitiveservices.azure.com/";
+  const cognitiveServiceCredentials = new CognitiveServicesCredentials(computerVisionKey);
+  const computerVisionClient = new ComputerVisionClient(cognitiveServiceCredentials, computerVisionEndPoint);
+
+  const printedResult = await readTextFromURL(computerVisionClient, printedTextSampleURL);
+
+  var data = "";
+  var hasRecords = false
+  for (const page in printedResult) {
+
+    const result = printedResult[page];
+    if (result.lines) {
+      if (result.lines.length) {
+        for (const line of result.lines) {
+
+          data = data + " " + line.text + " "
+        }
+      }
+    }
+
+    else { }
+  }
+console.log(data)
+
+  var documents = [
+    data
+  ];
+  const poller = await client.beginAnalyzeHealthcareEntities(documents);
+  const results = await poller.pollUntilDone();
+  var Dated = "";
+
+  for await (const result of results) {
+
+    console.log(result)
+  /*   if (!result.error) {
+      var TextName = "";
+      var TEST_VALUE = "";
+      var TEST_Unit = "";
+      var NormalizedText = "";
+ 
+      for (const entity of result.entities) {
+
+        if (entity.category == "Date"&&Dated=="") {
+          Dated=entity.text
+        }
+
+        if (entity.category == "ExaminationName" && entity.text != "RESULT IN INDEX" && entity.text != "Hence" && entity.text != "TextName" && entity.text != "Test" && entity.text != "test" && entity.text != "Lab" && entity.text != "Tests" && entity.text != "blood" && entity.text != "Count" && entity.text != "RESULT IN INDEX REMARKS") {
+
+          TextName = entity.text
+          NormalizedText = entity.normalizedText
+          hasRecords = true
+
+        }
+        if (entity.category == "MeasurementValue") {
+
+          TEST_VALUE = entity.text
+          hasRecords = true
+
+
+        }
+        if (entity.category == "MeasurementUnit") {
+          TEST_Unit = entity.text
+          hasRecords = true
+          //
+        }
+
+        if (TextName != "" && TEST_VALUE != "" && TEST_Unit != "") {
+
+
+          var vitalId = 0
+          NormalizedText ? NormalizedText.toString() : 'Undetermined'
+          const data = new VitalDetailsSchema({
+
+            vitalId: GetRandomId(10000, 1000000),
+            normalizedText: NormalizedText == "" ? "Undetermined" : NormalizedText,
+            normalvalues: "Undetermined",
+            description: "Undetermined"
+
+
+          })
+
+          const user = await VitalDetailsSchema.findOne({
+            normalizedText: NormalizedText
+
+          });
+          if (user == null || user.length == 0) {
+            const dataToSave = await data.save();
+
+            vitalId = data.vitalId
+
+          }
+          else {
+            vitalId = user.vitalId
+
+          }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          const medicalRecordAIModel = new MedicalRecordAIModel({
+            mraiId: GetRandomId(10000, 1000000),
+            recordId: medicalrecordModel.recordId,
+            testname: TextName,
+            testvalue: TEST_VALUE,
+            testunit: TEST_Unit,
+            normalizedText: NormalizedText,
+            vitalId: vitalId,
+            dated:Dated,
+            userId:req.body.userId
+
+          })
+          medicalRecordAIModel.save()
+          TextName = "";
+          TEST_VALUE = "";
+          TEST_Unit = "";
+          if (hasRecords) {
+            var myquery = { recordId: medicalrecordModel.recordId };
+            var newvalues = { $set: { smartReport: 1 } };
+            MedicalRecordModel.findOneAndUpdate(myquery,
+              newvalues,
+              function (err, response) {
+                // do something
+              });
+          }
+          else {
+            var myquery = { recordId: medicalrecordModel.recordId };
+            var newvalues = { $set: { smartReport: 2 } };
+            MedicalRecordModel.findOneAndUpdate(myquery,
+              newvalues,
+              function (err, response) {
+                // do something
+              });
+          }
+
+          continue;
+        }
+      }
+
+    } else console.error("\tError:", result.error); */
+  }
+ 
+
+})
+
+
+router.post('/majorvitals/post', async (req, res) => {
+
+
+  const posts = new MajorVitalsSchema({
+
+    majorVitalId: GetRandomId(10000, 1000000),
+    normalizedText: req.body.normalizedText,
+    image: req.body.image,
+  })
+  posts.save()
+  res.json(success("OK", { data: posts }, res.statusCode))
+});
+
+
+
+
+router.get('/smartHealth/GetSmartHealthAnalysis/:userId', async (req, res) => {
+  const userId = req.params.userId
+
+  MajorVitalsSchema.aggregate([
+  
+
+    {
+
+      $lookup: {
+        from: "vitaldetailsschemas",
+        localField: "majorVitalId",
+        foreignField: "majorVitalId",
+        as: "vitaldetails"
+      },
+
+    },
+ 
+   
+    { 
+      $unwind: "$vitaldetails" 
+  },
+ 
+  {
+
+    $lookup: {
+      from: "medicalrecordaidatas",
+      localField: "vitaldetails.vitalId",
+      foreignField: "vitalId",
+      as: "medicalrecord"
+    },
+
+  },
+
+  { $group:{ _id:'$_id', data: { $push: '$$ROOT' }} },
+ 
+  
+ 
+    
+  ]).exec(function (err, students) {
+    res.json(success("OK", { data: students }, res.statusCode))
+  });
 
 })
 module.exports = router;
