@@ -1666,6 +1666,7 @@ router.get('/smartHealth/GetSmartHealthAnalysis/:userId', async (req, res) => {
       from: "medicalrecordaidatas",
       localField: "vitaldetails.vitalId",
       foreignField: "vitalId",
+  
       as: "medicalrecord"
     },
 
@@ -1673,12 +1674,41 @@ router.get('/smartHealth/GetSmartHealthAnalysis/:userId', async (req, res) => {
 
   { $group:{ _id:'$_id', data: { $push: '$$ROOT' }} },
  
-  
+
  
     
   ]).exec(function (err, students) {
+
+
+
+
+
+
+
+
+
     res.json(success("OK", { data: students }, res.statusCode))
   });
 
 })
+
+
+
+router.post('/vitaldetails/addHeartRate',  async  (req, res) => {
+  const medicalRecordAIModel = new MedicalRecordAIModel({
+    mraiId: GetRandomId(10000, 1000000),
+    recordId:0,
+    testname: "Heart Rate",
+    testvalue:req.body.testvalue,
+    testunit: "Counts/Min",
+    normalizedText: "Heart Rate",
+    vitalId: 437324,
+    dated:req.body.dated,
+    userId:req.body.userId
+
+  })
+  medicalRecordAIModel.save()
+  res.json(success("Heart Rates  Added", { data: "1" }, res.statusCode))
+ 
+ })
 module.exports = router;

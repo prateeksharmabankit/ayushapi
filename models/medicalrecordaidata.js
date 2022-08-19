@@ -48,6 +48,11 @@ const medicalrecordaidataSchema = new mongoose.Schema({
         type: Number
     },
 
+    status :{
+        
+        type: Boolean
+    },
+
    
 })
 
