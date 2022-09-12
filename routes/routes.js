@@ -8,9 +8,12 @@ const UserModel = require('../models/user');
 const ChatModel = require('../models/chat');
 const MedicalRecordModel = require('../models/medicalrecord');
 const MedicalRecordAIModel = require('../models/medicalrecordaidata');
-
+var axios = require('axios');
 const VitalDetailsSchema = require('../models/vitalDetails');
 const MajorVitalsSchema = require('../models/majorvitals');
+
+const BenificiariesSchema = require('../models/benificiaries');
+
 
 
 const sleep = require('util').promisify(setTimeout);
@@ -41,6 +44,7 @@ const client = new TextAnalyticsClient("https://ayushmedicaltestentity.cognitive
 const { FormRecognizerClient } = require("@azure/ai-form-recognizer");
 const { ComputerVisionClient } = require("@azure/cognitiveservices-computervision");
 const { CognitiveServicesCredentials } = require("@azure/ms-rest-azure-js");
+const vitalDetails = require('../models/vitalDetails');
 var upload = multer({
   storage: multerAzure({
     account: 'poacdocreport', //The name of the Azure storage account
@@ -590,171 +594,7 @@ router.post('/subCategories/post', async (req, res) => {
 
 
 });
-router.post('/chats/post', async (req, res) => {
-  var user = new ChatModel(req.body)
 
-  ChatModel.aggregate([
-    { $match: { postId: Number(user.postId) } },
-
-    { $match: { $or: [{ sender: Number(user.sender) }, { reciever: Number(user.sender) }] } },
-
-    { "$limit": 1 }
-  ]).exec(function (err, students) {
-
-    console.log(students)
-
-    if (students == 0) {
-      user.save();
-      res.json(success("Chats Added", { data: user }, res.statusCode))
-    }
-    else {
-      user = students[0]
-      res.json(success("Chats updated", { data: user }, res.statusCode))
-
-    }
-
-
-
-  });
-
-
-
-
-
-
-});
-router.get('/chats/getMyChats/:userId', async (req, res) => {
-  const userId = req.params.userId
-  ChatModel.aggregate([
-    { $match: { $or: [{ sender: Number(userId) }, { reciever: Number(userId) }] } },
-
-    {
-
-      $lookup: {
-        from: "users",
-        localField: "sender",
-        foreignField: "userId",
-        as: "senderuser"
-      },
-
-    },
-    {
-
-      $lookup: {
-        from: "users",
-        localField: "reciever",
-        foreignField: "userId",
-        as: "recieveruser"
-      },
-
-    },
-    {
-
-      $lookup: {
-        from: "chatcontents",
-        localField: "_id",
-        foreignField: "chatId",
-        "pipeline": [
-          { $sort: { dateTimeStamp: -1 } },
-          { "$limit": 1 }
-        ],
-        as: "chatcontent"
-      },
-
-    },
-
-    {
-      $unwind: '$chatcontent'
-    }
-    ,
-
-    {
-      $unwind: '$senderuser'
-    },
-    {
-      $unwind: '$recieveruser'
-    },
-
-  ]).exec(function (err, students) {
-
-    students.forEach(result => {
-      const unixTime = result.chatcontent.dateTimeStamp;
-      const date = new Date(unixTime);
-      result.ago = moment(date, "YYYY-MM-DD HH:mm:ss").fromNow();
-
-    });
-    res.json(success("OK", { data: students }, res.statusCode))
-
-
-
-  });
-
-})
-router.post('/chatcontent/post', async (req, res) => {
-  var user = new ChatContentModel(req.body)
-  user.dateTimeStamp = new Date(),
-    await user.save();
-  res.json(success("Chats content saved", { data: user }, res.statusCode))
-
-});
-
-router.get('/chats/getMyChatContent/:chatId', async (req, res) => {
-  const _chatId = req.params.chatId
-  var mongoose = require('mongoose')
-
-  try {
-
-
-    ChatContentModel.aggregate([
-      { $match: { chatId: mongoose.Types.ObjectId(_chatId) } },
-
-      {
-
-        $lookup: {
-          from: "users",
-          localField: "sender",
-          foreignField: "userId",
-          as: "senderuser"
-        },
-
-      },
-      {
-
-        $lookup: {
-          from: "users",
-          localField: "reciever",
-          foreignField: "userId",
-          as: "recieveruser"
-        },
-
-      },
-
-
-
-
-
-      {
-        $unwind: '$senderuser'
-      },
-      {
-        $unwind: '$recieveruser'
-      },
-
-    ]).exec(function (err, students) {
-
-      students.forEach(result => {
-        const unixTime = result.dateTimeStamp;
-        const date = new Date(unixTime);
-        result.ago = moment(date, "YYYY-MM-DD HH:mm:ss").fromNow();
-
-      });
-      res.json(success("OK", { data: students }, res.statusCode))
-    });
-  }
-  catch (errors) {
-    res.json(error(errors.message, res.statusCode))
-  }
-});
 
 
 router.post('/fileupload', upload.single("file"), async function (req, res, next) {
@@ -915,7 +755,6 @@ router.post('/fileupload', upload.single("file"), async function (req, res, next
 
 
 
-  //const aa=await documentExtract(req.file.key, res, medicalrecordModel)
 
 })
 router.post('/fileuploadImage', uploadimage.single("file"), async function (req, res, next) {
@@ -1178,11 +1017,6 @@ router.get('/medicalreport/GetSmartReport/:recordId', async (req, res) => {
   });
 
 })
-router.post('/chatcontent/post', async (req, res) => {
-  var user = new ChatContentModel(req.body)
-  user.dateTimeStamp = new Date(),
-    await user.save();
-  res.json(success("Chats content saved", { data: user }, res.statusCode))
 
 
 
@@ -1226,7 +1060,6 @@ router.post('/chatcontent/post', async (req, res) => {
 
 
 
-})
 
 
 router.post('/vitaldetails/post', async (req, res) => {
@@ -1698,11 +1531,11 @@ router.post('/vitaldetails/addHeartRate',  async  (req, res) => {
   const medicalRecordAIModel = new MedicalRecordAIModel({
     mraiId: GetRandomId(10000, 1000000),
     recordId:0,
-    testname: "Heart Rate",
+    testname: req.body.testname,
     testvalue:req.body.testvalue,
-    testunit: "Counts/Min",
-    normalizedText: "Heart Rate",
-    vitalId: 437324,
+    testunit: req.body.testunit,
+    normalizedText: req.body.normalizedText,
+    vitalId: req.body.vitalId,
     dated:req.body.dated,
     userId:req.body.userId
 
@@ -1711,4 +1544,344 @@ router.post('/vitaldetails/addHeartRate',  async  (req, res) => {
   res.json(success("Heart Rates  Added", { data: "1" }, res.statusCode))
  
  })
+
+
+
+
+ router.get('/getvitals/getvitalsByMajorVitalId/:majorVitalId', async (req, res) => {
+  const majorVitalId = req.params.majorVitalId
+
+ 
+  const data = await vitalDetails.find({ majorVitalId: Number(majorVitalId) });
+
+  res.json(success("Vitals Fetched Succeddfully", { data: data }, res.statusCode))
+
+})
+
+
+
+
+
+
+
+
+
+
+
+ router.get('/labtest/getProviderToken/:providerId',  async  (req, res) => {
+ var providerId=req.params.providerId
+if(providerId==1)
+{
+  var config = {
+  baseURL: 'https://velso.thyrocare.cloud/api',
+}
+
+
+axios.post('/Login/Login', {
+  username: "9650269758",  password: "050A24",  portalType: "", userType: "dsa", facebookId: "string",  mobile: "string" 
+},config)
+.then(function (response) {
+ res.json(success("Meddleware Logged In", { data: response.data.apiKey}, res.statusCode))
+})
+.catch(function (error) {
+
+});
+}
+ })
+
+
+
+
+ router.post('/labtest/gettests',  async  (req, res) => {
+
+  var providerId=req.body.providerId
+  var testtype=req.body.type
+  var vendorApiKey=req.body.apiKey
+
+ if(providerId==1)
+ {
+   var config = {
+   baseURL: 'https://velso.thyrocare.cloud/api',
+ }
+ 
+ 
+ axios.post('/productsmaster/Products', {ProductType: testtype,  apiKey: vendorApiKey},config)
+ .then(function (response) {
+ 
+
+  let testsArray = [];
+switch (testtype) {
+  case 'TEST':
+  
+    response.data.master.tests.forEach(results => {
+      let childArray = [];
+      results.childs.forEach(child => {
+        childArray.push({
+    
+          name: child.name,
+          code: child.code,
+          groupName: results.groupName,
+      });
+      });
+  
+      testsArray.push({
+        name: results.name,
+        code: results.code,
+        testCount: results.testCount,
+        fasting: results.fasting,
+        diseaseGroup: results.diseaseGroup,
+        units: results.units,
+        groupName: results.groupName,
+        category: results.category,
+        rate:results.rate.b2C,
+        discount:results.rate.b2B,
+       
+        testlist:childArray
+  
+    });
+        });
+  
+      
+  
+  
+  
+    res.json(success("Lab Tests Feched Successfully", { data: testsArray}, res.statusCode))
+    break;
+
+  case 'Profile':
+    console.log('Profile');
+    
+    response.data.master.profile.forEach(results => {
+      let childArray = [];
+      results.childs.forEach(child => {
+        childArray.push({
+    
+          name: child.name,
+          code: child.code,
+          groupName: results.groupName,
+      });
+      });
+  
+      testsArray.push({
+        name: results.name,
+        code: results.code,
+        testCount: results.testCount,
+        fasting: results.fasting,
+        diseaseGroup: results.diseaseGroup,
+        units: results.units,
+        groupName: results.groupName,
+        category: results.category,
+        rate:results.rate.b2C,
+        discount:results.rate.b2B,
+        image:results.imageMaster[0].imgLocations,
+        image1:results.imageMaster[1].imgLocations,
+        testlist:childArray
+  
+    });
+        });
+  
+      
+  
+  
+  
+    res.json(success("Lab Tests Feched Successfully", { data: testsArray}, res.statusCode))
+    break;
+    case 'Offer':
+      console.log('Offer');
+     
+  response.data.master.offer.forEach(results => {
+    let childArray = [];
+    results.childs.forEach(child => {
+      childArray.push({
+  
+        name: child.name,
+        code: child.code,
+        groupName: results.groupName,
+    });
+    });
+
+    testsArray.push({
+      name: results.name,
+      code: results.code,
+      testCount: results.testCount,
+      fasting: results.fasting,
+      diseaseGroup: results.diseaseGroup,
+      units: results.units,
+      groupName: results.groupName,
+      category: results.category,
+      rate:results.rate.b2C,
+      discount:results.rate.b2B,
+      image:results.imageMaster[0].imgLocations,
+      image1:results.imageMaster[1].imgLocations,
+      testlist:childArray
+
+  });
+      });
+
+    
+
+
+
+  res.json(success("Lab Tests Feched Successfully", { data: testsArray}, res.statusCode))
+      break;
+  default:
+    console.log(`Sorry, we are out of ${testtype}.`);
+}
+
+ 
+ })
+ .catch(function (error) {
+  console.log(error)
+ });
+ }
+  })
+
+
+  
+ 
+  router.post('/labtest/getAppontmentSlots',  async  (req, res) => {
+
+      var providerId=req.body.providerId
+      var pincode=req.body.Pincode
+      var vendorApiKey=req.body.apiKey
+      var date=req.body.date
+     if(providerId==1)
+     {
+       var config = {
+       baseURL: 'https://velso.thyrocare.cloud/api',
+     }
+     
+     
+     axios.post('/TechsoApi/GetAppointmentSlots', {Pincode: pincode,  ApiKey: vendorApiKey,  Date: date},config)
+     .then(function (data) {
+       let testsArray = [];
+       data.data.lSlotDataRes.forEach(child => {
+        testsArray.push({
+    
+          id: child.id,
+          slot: child.slot,
+      
+      });
+      }); 
+      res.json(success(data.data.response, { data:testsArray}, res.statusCode))
+    
+     
+     })
+     .catch(function (error) {
+      console.log(error)
+     });
+     }
+      })
+
+
+  router.post('/labtest/bookLabTest',  async  (req, res) => {
+
+        var providerId=req.body.providerId
+      
+        var vendorApiKey=req.body.apiKey
+        var OrderId=req.body.OrderId
+        var Email=req.body.Email
+        var Gender=req.body.Gender
+        var Mobile=req.body.Mobile
+        var Address=req.body.Address
+        var ApptDate=req.body.ApptDate
+        var Margin=req.body.Margin
+
+        var OrderBy="DSA"
+        var Passon= req.body.Passon
+        var PayType= "Postpaid"
+        var PhoneNo=req.body.PhoneNo
+        var Pincode=req.body.Pincode
+        var Product= req.body.Product
+        var Rate= req.body.Rate
+        var RefCode= req.body.RefCode 
+        var ReportCode= req.body.ReportCode 
+        var Remarks=req.body.Margin
+        var Reports = req.body.Reports
+        var ServiceType= "H"
+        var BenCount= req.body.BenCount
+        
+        
+        
+        
+        
+       if(providerId==1)
+       {
+         var config = {
+         baseURL: 'https://velso.thyrocare.cloud/api',
+       }
+       
+       
+       axios.post('/TechsoApi/GetAppointmentSlots', {Pincode: pincode,  ApiKey: vendorApiKey,  Date: date},config)
+       .then(function (data) {
+         let testsArray = [];
+         data.data.lSlotDataRes.forEach(child => {
+          testsArray.push({
+      
+            id: child.id,
+            slot: child.slot,
+        
+        });
+        }); 
+        res.json(success(data.data.response, { data:testsArray}, res.statusCode))
+      
+       
+       })
+       .catch(function (error) {
+        console.log(error)
+       });
+       }})
+
+
+  router.post('/vitaldetails/addCustomVitalRecords',  async  (req, res) => {
+          const medicalRecordAIModel = new MedicalRecordAIModel({
+            mraiId: GetRandomId(10000, 1000000),
+            recordId:0,
+            testname: req.body.testname,
+            testvalue:req.body.testvalue,
+            testunit: req.body.testunit,
+            normalizedText: req.body.normalizedText,
+            vitalId: req.body.vitalId,
+            dated:req.body.dated,
+            userId:req.body.userId,
+            majorVitalId: req.body.majorVitalId,
+        
+          })
+          medicalRecordAIModel.save()
+          res.json(success("Vitals Added  Successfully", { data: "1" }, res.statusCode))
+         
+         })
+
+
+
+
+         
+router.post('/labtest/Addbeni',  async  (req, res) => {
+  const beniModel = new BenificiariesSchema({
+    baniid: GetRandomId(10000, 1000000),
+    beniUserId: req.body.beniUserId,
+    beniname: req.body.beniname,
+    age: req.body.age,
+    gender: req.body.gender,
+    
+
+  })
+  beniModel.save()
+  res.json(success("beneficiary Added Successfully", { data: "1" }, res.statusCode))
+ 
+ })
+ router.get('/labtest/Getbeni/:beniUserId', async (req, res) => {
+  var beniUserId=req.params.beniUserId
+  BenificiariesSchema.aggregate([
+
+    { $match: { beniUserId: Number(beniUserId) } },
+    
+  ]).exec(function (err, students) {
+
+   
+    res.json(success("OK", { data: students }, res.statusCode))
+  });
+
+})
+
 module.exports = router;
