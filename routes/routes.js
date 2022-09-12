@@ -1774,6 +1774,36 @@ switch (testtype) {
       })
 
 
+
+
+  router.post('/labtest/verifyPinCodeAvaiblity',  async  (req, res) => {
+
+        var providerId=req.body.providerId
+        var pincode=req.body.Pincode
+        var vendorApiKey=req.body.apiKey
+       
+       if(providerId==1)
+       {
+         var config = {
+         baseURL: 'https://velso.thyrocare.cloud/api',
+       }
+       
+       
+       axios.post('/TechsoApi/PincodeAvailability', {Pincode: pincode,  ApiKey: vendorApiKey},config)
+       .then(function (data) {
+        
+        res.json(success(data.data.response, { data:data.data}, res.statusCode))
+      
+       
+       })
+       .catch(function (error) {
+        console.log(error)
+       });
+       }
+        })
+  
+
+
   router.post('/labtest/bookLabTest',  async  (req, res) => {
 
         var providerId=req.body.providerId
