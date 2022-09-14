@@ -1820,8 +1820,8 @@ switch (testtype) {
         var Rate= req.body.Rate
         var Reports = req.body.Reports
         var BenCount= req.body.BenCount
-      
-        var BenDataXML= req.body.BenDataXML.replace(/\\[nt]/g, '').trim();
+        var ReportCode= req.body.ReportCode
+        var BenDataXML= req.body.BenDataXML
        
        
        console.log(BenDataXML)
@@ -1849,11 +1849,11 @@ switch (testtype) {
          Product: Product,
          Rate: Rate,
     
-         ReportCode:"", 
+         ReportCode:ReportCode, 
          Reports : Reports,
          BenCount:BenCount,
 
-         BenDataXML:BenDataXML.replace(/\\[nt]/g, '').trim(),
+         BenDataXML:BenDataXML,
          Margin:"0",
          OrderId: String(GetRandomId(10000, 1000000)),
          OrderBy:"DSA",
