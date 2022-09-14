@@ -1815,7 +1815,7 @@ switch (testtype) {
         var Mobile=req.body.Mobile
         var Address=req.body.Address
         var ApptDate=req.body.ApptDate
-        var Pincode=req.body.Pincode
+        var Pincode=String(req.body.Pincode)
         var Product= req.body.Product
         var Rate= req.body.Rate
         var Reports = req.body.Reports
@@ -1836,14 +1836,14 @@ switch (testtype) {
        }
        
        
-       axios.post('/BookingMaster/DSABooking', {  providerId:providerId,
-         vendorApiKey:vendorApiKey,
+       axios.post('/BookingMaster/DSABooking', { 
+        ApiKey:vendorApiKey,
          Email:Email,
          Gender:Gender,
          Mobile:Mobile,
          Address:Address,
          ApptDate:ApptDate,
-         Pincode:Pincode,
+         Pincode:String(Pincode),
          Product: Product,
          Rate: Rate,
     
@@ -1852,8 +1852,8 @@ switch (testtype) {
          BenCount:BenCount,
 
          BenDataXML:BenDataXML,
-         Margin:0,
-         OrderId: GetRandomId(10000, 1000000),
+         Margin:"0",
+         OrderId: String(GetRandomId(10000, 1000000)),
          OrderBy:"DSA",
          Passon: 0,
          PayType: "Postpaid",
@@ -1862,15 +1862,18 @@ switch (testtype) {
          Remarks:"",
         
          ServiceType: "H",
-         RefCode: 9650269758},config)
+         RefCode: "9650269758"},config)
        .then(function (data) {
-       
-        res.json(success(data.data.response, { data:data.data}, res.statusCode))
+        console.log(data)
+        res.json(success("Done", { data:data.data}, res.statusCode))
       
        
        })
        .catch(function (error) {
-        console.log(error)
+        if (error.response) {
+          console.log(error.response.data);
+        
+        }
        });
        }})
 
