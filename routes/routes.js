@@ -1821,12 +1821,11 @@ switch (testtype) {
         var Reports = req.body.Reports
         var BenCount= req.body.BenCount
 
-        var BenDataXML= req.body.BenDataXML
+        var BenDataXML= req.body.BenDataXML.replace(/\\[nt]/g, '').trim();
       
-
-        
-        
-        
+       
+       
+      
         
         
        if(providerId==1)
@@ -1834,7 +1833,7 @@ switch (testtype) {
          var config = {
          baseURL: 'https://velso.thyrocare.cloud/api',
        }
-       
+       /* 
        
        axios.post('/BookingMaster/DSABooking', { 
         ApiKey:vendorApiKey,
@@ -1874,7 +1873,7 @@ switch (testtype) {
           console.log(error.response.data);
         
         }
-       });
+       }); */
        }})
 
 
