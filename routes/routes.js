@@ -1809,27 +1809,21 @@ switch (testtype) {
         var providerId=req.body.providerId
       
         var vendorApiKey=req.body.apiKey
-        var OrderId=req.body.OrderId
+       
         var Email=req.body.Email
         var Gender=req.body.Gender
         var Mobile=req.body.Mobile
         var Address=req.body.Address
         var ApptDate=req.body.ApptDate
-        var Margin=req.body.Margin
-
-        var OrderBy="DSA"
-        var Passon= req.body.Passon
-        var PayType= "Postpaid"
-        var PhoneNo=req.body.PhoneNo
         var Pincode=req.body.Pincode
         var Product= req.body.Product
         var Rate= req.body.Rate
-        var RefCode= req.body.RefCode 
-        var ReportCode= req.body.ReportCode 
-        var Remarks=req.body.Margin
         var Reports = req.body.Reports
-        var ServiceType= "H"
         var BenCount= req.body.BenCount
+
+        var BenDataXML= req.body.BenDataXML
+      
+
         
         
         
@@ -1842,18 +1836,36 @@ switch (testtype) {
        }
        
        
-       axios.post('/TechsoApi/GetAppointmentSlots', {Pincode: pincode,  ApiKey: vendorApiKey,  Date: date},config)
-       .then(function (data) {
-         let testsArray = [];
-         data.data.lSlotDataRes.forEach(child => {
-          testsArray.push({
-      
-            id: child.id,
-            slot: child.slot,
+       axios.post('/BookingMaster/DSABooking', {  providerId:providerId,
+         vendorApiKey:vendorApiKey,
+         Email:Email,
+         Gender:Gender,
+         Mobile:Mobile,
+         Address:Address,
+         ApptDate:ApptDate,
+         Pincode:Pincode,
+         Product: Product,
+         Rate: Rate,
+    
+         ReportCode:"", 
+         Reports : Reports,
+         BenCount:BenCount,
+
+         BenDataXML:BenDataXML,
+         Margin:0,
+         OrderId: GetRandomId(10000, 1000000),
+         OrderBy:"DSA",
+         Passon: 0,
+         PayType: "Postpaid",
+         PhoneNo:"",
+       
+         Remarks:"",
         
-        });
-        }); 
-        res.json(success(data.data.response, { data:testsArray}, res.statusCode))
+         ServiceType: "H",
+         RefCode: 9650269758},config)
+       .then(function (data) {
+       
+        res.json(success(data.data.response, { data:data.data}, res.statusCode))
       
        
        })
