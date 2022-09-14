@@ -1833,7 +1833,7 @@ switch (testtype) {
          var config = {
          baseURL: 'https://velso.thyrocare.cloud/api',
        }
-       /* 
+       
        
        axios.post('/BookingMaster/DSABooking', { 
         ApiKey:vendorApiKey,
@@ -1873,7 +1873,7 @@ switch (testtype) {
           console.log(error.response.data);
         
         }
-       }); */
+       }); 
        }})
 
 
