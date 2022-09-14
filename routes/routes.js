@@ -1820,11 +1820,11 @@ switch (testtype) {
         var Rate= req.body.Rate
         var Reports = req.body.Reports
         var BenCount= req.body.BenCount
-
-        var BenDataXML= req.body.BenDataXML.replace(/\\[nt]/g, '').trim();
       
+        var BenDataXML= req.body.BenDataXML.replace(/\\[nt]/g, '').trim();
        
        
+       console.log(BenDataXML)
       
         
         
@@ -1834,8 +1834,8 @@ switch (testtype) {
          baseURL: 'https://velso.thyrocare.cloud/api',
        }
        
-       
-       axios.post('/BookingMaster/DSABooking', { 
+     
+        axios.post('/BookingMaster/DSABooking', { 
         ApiKey:vendorApiKey,
          Email:Email,
          Gender:Gender,
@@ -1850,7 +1850,7 @@ switch (testtype) {
          Reports : Reports,
          BenCount:BenCount,
 
-         BenDataXML:BenDataXML,
+         BenDataXML:BenDataXML.replace(/\\[nt]/g, '').trim(),
          Margin:"0",
          OrderId: String(GetRandomId(10000, 1000000)),
          OrderBy:"DSA",
@@ -1873,7 +1873,7 @@ switch (testtype) {
           console.log(error.response.data);
         
         }
-       }); 
+       });  
        }})
 
 
