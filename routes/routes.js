@@ -1832,6 +1832,9 @@ switch (testtype) {
        {
          var config = {
          baseURL: 'https://velso.thyrocare.cloud/api',
+          headers: {
+    'Content-Type': 'application/json'
+  }
        }
        
      
