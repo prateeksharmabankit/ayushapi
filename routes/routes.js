@@ -1975,11 +1975,15 @@ router.post('/labtest/Addbeni',  async  (req, res) => {
 router.get('/labtest/getOrders/:userId', async (req, res) => {
   const userId = req.params.userId
 
+
   try {
     LaborderdetailsSchema.aggregate([
       { $match: { userId: Number(userId) } },
 
     ]).exec(function (err, students) {
+
+
+      
       res.json(success("OK", { data: students }, res.statusCode))
     });
   }
@@ -1987,4 +1991,6 @@ router.get('/labtest/getOrders/:userId', async (req, res) => {
     res.json(error(errors.message, res.statusCode))
   }
 });
+
+
 module.exports = router;
