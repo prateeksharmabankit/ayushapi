@@ -13,6 +13,8 @@ const VitalDetailsSchema = require('../models/vitalDetails');
 const MajorVitalsSchema = require('../models/majorvitals');
 
 const BenificiariesSchema = require('../models/benificiaries');
+const LaborderdetailsSchema = require('../models/laborderdetails');
+
 
 
 
@@ -45,6 +47,7 @@ const { FormRecognizerClient } = require("@azure/ai-form-recognizer");
 const { ComputerVisionClient } = require("@azure/cognitiveservices-computervision");
 const { CognitiveServicesCredentials } = require("@azure/ms-rest-azure-js");
 const vitalDetails = require('../models/vitalDetails');
+const laborderdetails = require('../models/laborderdetails');
 var upload = multer({
   storage: multerAzure({
     account: 'poacdocreport', //The name of the Azure storage account
@@ -1805,7 +1808,7 @@ switch (testtype) {
 
 
   router.post('/labtest/bookLabTest',  async  (req, res) => {
-
+    var userId=req.body.userId
         var providerId=req.body.providerId
       
         var vendorApiKey=req.body.apiKey
@@ -1867,6 +1870,45 @@ switch (testtype) {
          RefCode: "9650269758"},config)
        .then(function (data) {
         console.log(data)
+
+        if(data.data.respId=="RES02012")
+        {
+
+          const laborderdetails = new LaborderdetailsSchema({
+            orderId:data.data.refOrderId,
+           
+            userId:req.body.userId,
+
+
+             providerId:req.body.providerId,
+             bookedOn:req.body.providerId,
+             
+           
+         
+             address:req.body.Address,
+             bookedOn: new Date(),
+          
+             product: req.body.Product,
+             rate: data.data.customerRate,
+             paymentType: data.data.payType,
+          
+             serviceType: data.data.serviceType,
+          
+        
+             appointmentDate:ApptDate,
+           
+        
+          })
+          laborderdetails.save()
+
+
+        }
+
+
+
+
+
+
         res.json(success("Done", { data:data.data}, res.statusCode))
       
        
@@ -1930,5 +1972,19 @@ router.post('/labtest/Addbeni',  async  (req, res) => {
   });
 
 })
+router.get('/labtest/getOrders/:userId', async (req, res) => {
+  const userId = req.params.userId
 
+  try {
+    LaborderdetailsSchema.aggregate([
+      { $match: { userId: Number(userId) } },
+
+    ]).exec(function (err, students) {
+      res.json(success("OK", { data: students }, res.statusCode))
+    });
+  }
+  catch (errors) {
+    res.json(error(errors.message, res.statusCode))
+  }
+});
 module.exports = router;
