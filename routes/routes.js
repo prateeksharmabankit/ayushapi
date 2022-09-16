@@ -1991,6 +1991,56 @@ router.get('/labtest/getOrders/:userId', async (req, res) => {
     res.json(error(errors.message, res.statusCode))
   }
 });
+router.post('/labtest/getOrdersSummary', async (req, res) => {
+  const orderId = req.body.orderId
+  var providerId=req.body.providerId
+      
+  var vendorApiKey=req.body.apiKey
+
+  if(providerId==1)
+  {
+    var config = {
+    baseURL: 'https://velso.thyrocare.cloud/api',
+     headers: {
+'Content-Type': 'application/json'
+}
+  }
+  
+
+   axios.post('/OrderSummary/OrderSummary', { ApiKey:vendorApiKey,OrderNo:orderId},config)
+  .then(function (data) {
+
+
+   if(data.data.respId=="RES00001")
+   {
+
+
+    res.json(success(data.data.response, { data:data.data}, res.statusCode))
+
+
+   }
+   else
+   {
+    
+   res.json(success(data.data.response, { data:data.data}, res.statusCode))
+   }
+
+  }
+  )
+}
+
+
+
+
+ 
+
+
+
+
+
+
+});
+
 
 
 module.exports = router;
