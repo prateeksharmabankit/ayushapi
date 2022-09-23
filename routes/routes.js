@@ -457,7 +457,19 @@ router.get('/User/UpdateToken/:userId/:token', async (req, res) => {
 
 
 })
+router.get('/User/UpdateMobile/:userId/:mobile', async (req, res) => {
 
+  var myquery = { userId: req.params.userId };
+  var newvalues = { $set: { mobile: req.params.mobile } };
+  UserModel.findOneAndUpdate(myquery,
+    newvalues,
+    function (err, response) {
+      // do something
+    });
+  res.json(success("Phone Number Updated !", { data: "1" }, res.statusCode))
+
+
+})
 
 
 router.post('/User/UpdateProfile', async (req, res) => {
