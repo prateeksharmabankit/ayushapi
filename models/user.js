@@ -27,7 +27,10 @@ const userSchema = new mongoose.Schema({
         type: String
     },
     
-
+    referedBy :{
+        
+        type: Number
+    },
    
 })
 

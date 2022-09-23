@@ -14,7 +14,7 @@ const MajorVitalsSchema = require('../models/majorvitals');
 
 const BenificiariesSchema = require('../models/benificiaries');
 const LaborderdetailsSchema = require('../models/laborderdetails');
-
+const ReferalsSchema = require('../models/referals');
 
 
 
@@ -397,12 +397,15 @@ router.get('/Posts/AddPostView/:postId', async (req, res) => {
 
 //User Routes
 router.post('/user/post', async (req, res) => {
+  const referedBy=req.body.referedBy
   const data = new UserModel({
     emailAddress: req.body.emailAddress,
     userId: GetRandomId(10000, 1000000),
     name: req.body.name,
     token: req.body.token,
-    image: req.body.image
+    image: req.body.image,
+    referedBy: req.body.referedBy
+ 
 
   })
 
@@ -412,6 +415,25 @@ router.post('/user/post', async (req, res) => {
   });
   if (user == null || user.length == 0) {
     const dataToSave = await data.save();
+
+    if(referedBy != null &&referedBy!=0)
+    {
+
+
+ const referal =await new ReferalsSchema({
+
+    referedBy:referedBy,
+    referedTo:dataToSave.userId,
+    referedAmount:10,
+    status:false
+
+  })
+
+  const referald  =await referal.save();
+  console.log(referald)
+
+    }
+
 
     res.json(success("User Added SuccessFully", { data: dataToSave }, res.statusCode))
   }
@@ -1827,7 +1849,7 @@ switch (testtype) {
         var BenDataXML= req.body.BenDataXML
        
        
-       console.log(BenDataXML)
+
       
         
         
@@ -1873,6 +1895,7 @@ switch (testtype) {
 
         if(data.data.respId=="RES02012")
         {
+          
 
           const laborderdetails = new LaborderdetailsSchema({
             orderId:data.data.refOrderId,
@@ -1900,6 +1923,7 @@ switch (testtype) {
         
           })
           laborderdetails.save()
+          
 
 
         }
@@ -1910,7 +1934,23 @@ switch (testtype) {
 
 
         res.json(success("Done", { data:data.data}, res.statusCode))
-      
+         
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
        
        })
        .catch(function (error) {
@@ -1973,10 +2013,12 @@ router.post('/labtest/Addbeni',  async  (req, res) => {
 
 })
 router.get('/labtest/getOrders/:userId', async (req, res) => {
+
   const userId = req.params.userId
 
 
-  try {
+
+   try {
     LaborderdetailsSchema.aggregate([
       { $match: { userId: Number(userId) } },
 
@@ -1989,7 +2031,7 @@ router.get('/labtest/getOrders/:userId', async (req, res) => {
   }
   catch (errors) {
     res.json(error(errors.message, res.statusCode))
-  }
+  } 
 });
 router.post('/labtest/getOrdersSummary', async (req, res) => {
   const orderId = req.body.orderId
