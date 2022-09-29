@@ -2096,5 +2096,92 @@ router.post('/labtest/getOrdersSummary', async (req, res) => {
 });
 
 
+const Agenda = require("agenda");
+const mongoString ="mongodb+srv://prateek:V9z1ntUKFeosJLK5@cluster0.aiuci.mongodb.net/proacdoc?retryWrites=true&w=majority";
+const agenda = new Agenda({ db: { address: mongoString }});
+
+agenda.define("first push", async (job) => {
+ 
+  console.log("first push initiated")
+  try {
+
+
+
+
+
+    var userTokens = [];
+
+    await UserModel.find({}, { "token": 1, "_id": 0 }).exec(function (err, result) {
+      if (err) throw err;
+      result.forEach(results => {
+
+        if (typeof results.token === 'undefined') {
+          //Variable isn't defined
+        }
+        else {
+          var message = {
+            data: {
+            
+              title:"Healthy lifestyle helps lower ♥ rate ",
+              desc: "Walk 30 mins/day and monitor your heart rate for 15 days !",
+            
+
+
+            },
+
+
+          };
+          userTokens.push(results.token)
+          console.log("Message Sent")
+           FCM.sendToMultipleToken(message, userTokens, function (err, response) {
+            if (err) {
+              console.log('err--', err);
+            } else {
+              console.log('response-----', response);
+            }
+
+          }) 
+
+        }
+      });
+
+    });
+
+
+  }
+  catch (error) {
+
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+});
+
+(async function () {
+  // IIFE to give access to async/await
+  await agenda.start();
+
+  await agenda.every("1 hours", "first push");
+
+
+})();
+
 
 module.exports = router;
