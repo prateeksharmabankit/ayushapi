@@ -2133,14 +2133,14 @@ agenda.define("first push", async (job) => {
           };
           userTokens.push(results.token)
           console.log("Message Sent")
-          /*  FCM.sendToMultipleToken(message, userTokens, function (err, response) {
+            FCM.sendToMultipleToken(message, userTokens, function (err, response) {
             if (err) {
               console.log('err--', err);
             } else {
               console.log('response-----', response);
             }
 
-          })  */
+          })  
 
         }
       });
@@ -2206,14 +2206,14 @@ agenda.define("second push", async (job) => {
           };
           userTokens.push(results.token)
           console.log("Message Sent")
-         /*   FCM.sendToMultipleToken(message, userTokens, function (err, response) {
+            FCM.sendToMultipleToken(message, userTokens, function (err, response) {
             if (err) {
               console.log('err--', err);
             } else {
               console.log('response-----', response);
             }
 
-          })  */
+          })  
 
         }
       });
@@ -2261,14 +2261,14 @@ agenda.define("third push", async (job) => {
           };
           userTokens.push(results.token)
           console.log("Message Sent")
-         /*   FCM.sendToMultipleToken(message, userTokens, function (err, response) {
+            FCM.sendToMultipleToken(message, userTokens, function (err, response) {
             if (err) {
               console.log('err--', err);
             } else {
               console.log('response-----', response);
             }
 
-          })  */
+          })  
 
         }
       });
@@ -2318,14 +2318,14 @@ agenda.define("fourth push", async (job) => {
           };
           userTokens.push(results.token)
           console.log("Message Sent")
-         /*   FCM.sendToMultipleToken(message, userTokens, function (err, response) {
+            FCM.sendToMultipleToken(message, userTokens, function (err, response) {
             if (err) {
               console.log('err--', err);
             } else {
               console.log('response-----', response);
             }
 
-          })  */
+          })  
 
         }
       });
