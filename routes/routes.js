@@ -2133,14 +2133,14 @@ agenda.define("first push", async (job) => {
           };
           userTokens.push(results.token)
           console.log("Message Sent")
-           FCM.sendToMultipleToken(message, userTokens, function (err, response) {
+          /*  FCM.sendToMultipleToken(message, userTokens, function (err, response) {
             if (err) {
               console.log('err--', err);
             } else {
               console.log('response-----', response);
             }
 
-          }) 
+          })  */
 
         }
       });
@@ -2173,13 +2173,194 @@ agenda.define("first push", async (job) => {
 
 
 });
+agenda.define("second push", async (job) => {
+ 
+  console.log("second push initiated")
+  try {
+
+
+
+
+
+    var userTokens = [];
+
+    await UserModel.find({}, { "token": 1, "_id": 0 }).exec(function (err, result) {
+      if (err) throw err;
+      result.forEach(results => {
+
+        if (typeof results.token === 'undefined') {
+          //Variable isn't defined
+        }
+        else {
+          var message = {
+            data: {
+            
+              title:"अब मेडिकल डॉक्युमेंट गुम होने और भूलने की टेंशन खत्म",
+              desc: "अपनी आयुष्मान भारत आईडी बनाओ, सरकार ने जारी किए डिजिटल हेल्थ कार्ड",
+            
+
+
+            },
+
+
+          };
+          userTokens.push(results.token)
+          console.log("Message Sent")
+         /*   FCM.sendToMultipleToken(message, userTokens, function (err, response) {
+            if (err) {
+              console.log('err--', err);
+            } else {
+              console.log('response-----', response);
+            }
+
+          })  */
+
+        }
+      });
+
+    });
+
+
+  }
+  catch (error) {
+
+  }
+
+
+});
+agenda.define("third push", async (job) => {
+ 
+  console.log("third push initiated")
+  try {
+
+
+
+
+
+    var userTokens = [];
+
+    await UserModel.find({}, { "token": 1, "_id": 0 }).exec(function (err, result) {
+      if (err) throw err;
+      result.forEach(results => {
+
+        if (typeof results.token === 'undefined') {
+          //Variable isn't defined
+        }
+        else {
+          var message = {
+            data: {
+            
+              title:"Track your blood glucose",
+              desc: "Your kindness is judged through this cardiac part, On which, your crush usually throws a dart...",
+            
+
+
+            },
+
+
+          };
+          userTokens.push(results.token)
+          console.log("Message Sent")
+         /*   FCM.sendToMultipleToken(message, userTokens, function (err, response) {
+            if (err) {
+              console.log('err--', err);
+            } else {
+              console.log('response-----', response);
+            }
+
+          })  */
+
+        }
+      });
+
+    });
+
+
+  }
+  catch (error) {
+
+  }
+
+
+});
+
+
+agenda.define("fourth push", async (job) => {
+ 
+  console.log("fourth push initiated")
+  try {
+
+
+
+
+
+    var userTokens = [];
+
+    await UserModel.find({}, { "token": 1, "_id": 0 }).exec(function (err, result) {
+      if (err) throw err;
+      result.forEach(results => {
+
+        if (typeof results.token === 'undefined') {
+          //Variable isn't defined
+        }
+        else {
+          var message = {
+            data: {
+            
+              title:"Take Self Assessment now",
+              desc: "Experiencing mild symptoms, but can't decide wether to visit to doctor or not?",
+            
+
+
+            },
+
+
+          };
+          userTokens.push(results.token)
+          console.log("Message Sent")
+         /*   FCM.sendToMultipleToken(message, userTokens, function (err, response) {
+            if (err) {
+              console.log('err--', err);
+            } else {
+              console.log('response-----', response);
+            }
+
+          })  */
+
+        }
+      });
+
+    });
+
+
+  }
+  catch (error) {
+
+  }
+
+
+});
 
 (async function () {
   // IIFE to give access to async/await
   await agenda.start();
 
-  await agenda.every("1 hours", "first push");
+  await agenda.every("5 hours", {
+    skipImmediate: true
+  } ,"first push");
+  await agenda.every("7 hours",  {
+    skipImmediate: true
+  }, "second push");
+  await agenda.every("12 hours" , {
+    skipImmediate: true
+  } ,"third push");
+  await agenda.every("10 hours", {
+    skipImmediate: false
+  } , "fourth push");
 
+
+
+  
 
 })();
 
