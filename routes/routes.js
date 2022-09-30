@@ -2345,18 +2345,10 @@ agenda.define("fourth push", async (job) => {
   // IIFE to give access to async/await
   await agenda.start();
 
-  await agenda.every("5 hours", {
-    skipImmediate: true
-  } ,"first push");
-  await agenda.every("7 hours",  {
-    skipImmediate: true
-  }, "second push");
-  await agenda.every("12 hours" , {
-    skipImmediate: true
-  } ,"third push");
-  await agenda.every("10 hours", {
-    skipImmediate: false
-  } , "fourth push");
+  await agenda.every("5 hours","first push");
+  await agenda.every("7 hours", "second push");
+  await agenda.every("12 hours" ,"third push");
+  await agenda.every("10 hours" , "fourth push");
 
 
 
